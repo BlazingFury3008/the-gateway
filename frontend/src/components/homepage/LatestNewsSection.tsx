@@ -2,12 +2,12 @@ import Image from "next/image";
 
 export default function LatestNewsSection() {
   return (
-    <section className="py-10 bg-white">
+    <section className="py-10 bg-black">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold text-center mb-8">Latest News</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* News Card 1 */}
-          <div className="bg-gray-100 rounded-lg overflow-hidden shadow">
+          <div className="bg-gray-500 rounded-lg overflow-hidden shadow">
             <Image
               src="/images/news1.jpg" // Update with your image path
               alt="News article 1"
@@ -26,7 +26,7 @@ export default function LatestNewsSection() {
             </div>
           </div>
           {/* News Card 2 */}
-          <div className="bg-gray-100 rounded-lg overflow-hidden shadow">
+          <div className="bg-gray-500 rounded-lg overflow-hidden shadow">
             <Image
               src="/images/news2.jpg" // Update with your image path
               alt="News article 2"
@@ -45,7 +45,7 @@ export default function LatestNewsSection() {
             </div>
           </div>
           {/* News Card 3 */}
-          <div className="bg-gray-100 rounded-lg overflow-hidden shadow">
+          <div className="bg-gray-500 rounded-lg overflow-hidden shadow">
             <Image
               src="/images/news3.jpg" // Update with your image path
               alt="News article 3"
@@ -64,6 +64,10 @@ export default function LatestNewsSection() {
             </div>
           </div>
         </div>
+        {/* See All Link with margin-top */}
+        <a href="/news" className="text-blue-600 hover:underline text-right mt-6 block">
+          See All
+        </a>
       </div>
     </section>
   );
