@@ -22,7 +22,7 @@ export default function CommunitySpotlight() {
               </div>
             </div>
             <p>
-              "The Gateway has transformed the way I engage with my players. The resources and community support are unmatched!"
+              &ldquo;The Gateway has transformed the way I engage with my players. The resources and community support are unmatched!&rdquo;
             </p>
           </div>
           {/* Spotlight 2 */}
@@ -41,7 +41,7 @@ export default function CommunitySpotlight() {
               </div>
             </div>
             <p>
-              "From tutorials to character creation, every aspect of The Gateway fuels my creativity and passion for gaming."
+              &ldquo;From tutorials to character creation, every aspect of The Gateway fuels my creativity and passion for gaming.&rdquo;
             </p>
           </div>
         </div>

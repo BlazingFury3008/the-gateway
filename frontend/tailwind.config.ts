@@ -6,14 +6,17 @@ export default {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: "class", // Enable dark mode using the 'class' strategy
+  darkMode: "media", // Uses system preference (no class toggling)
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        background: {
+          DEFAULT: "var(--background)", // Dynamic theme color
+        },
+        foreground: {
+          DEFAULT: "var(--foreground)", // Dynamic theme color
+        },
       },
-      // Optional: You can extend other properties for dark mode if needed
     },
   },
   plugins: [],

@@ -9,9 +9,9 @@ export default function Home() {
     <main>
       <HeroSection />
       <FeaturesSection />
-      <LatestNewsSection />
+      {/*<LatestNewsSection />
       <UpcomingEventsSection />
-      <CommunitySpotlight />
+      <CommunitySpotlight />*/}
     </main>
   );
 }
