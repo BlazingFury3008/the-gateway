@@ -25,7 +25,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative h-96 w-full overflow-hidden flex items-center justify-center ">
+    <section className="relative h-96 w-full overflow-hidden flex items-center justify-center mb-8">
       {/* Infinite Scrolling Image Slider */}
       <div
         className="absolute inset-0 flex transition-transform duration-1000 ease-linear"
