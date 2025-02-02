@@ -49,7 +49,7 @@ export default function Navbar() {
                     <p className="px-4 py-2 text-sm text-gray-300">{session.user.name}</p>
                     <Link href="/profile">
                       <p className="px-4 py-2 hover:bg-slate-700 rounded-md cursor-pointer">
-                        Edit Profile {JSON.stringify(session.user)}
+                        Edit Profile
                       </p>
                     </Link>
                     <button
