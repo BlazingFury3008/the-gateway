@@ -6,7 +6,7 @@ export default function Footer() {
           <p className="mb-4 md:mb-0">&copy; {new Date().getFullYear()} The Gateway. All rights reserved.</p>
           <div className="flex space-x-4">
             <a href="/about" className="hover:underline">
-              About Us
+              About Me
             </a>
             <a href="/contact" className="hover:underline">
               Contact

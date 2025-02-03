@@ -47,7 +47,7 @@ export default function Navbar() {
                 {dropdownOpen && (
                   <div className="absolute right-0 top-full mt-2 w-48 bg-slate-800 rounded-lg shadow-lg p-2 z-50 border border-gray-700">
                     <p className="px-4 py-2 text-sm text-gray-300">{session.user.name}</p>
-                    <Link href="/profile">
+                    <Link href="/profile" onClick={() => setDropdownOpen(false)}>
                       <p className="px-4 py-2 hover:bg-slate-700 rounded-md cursor-pointer">
                         Edit Profile
                       </p>
