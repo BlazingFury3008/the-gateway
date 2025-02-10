@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 # Schema for creating a user
 class UserCreate(BaseModel):
@@ -23,4 +24,4 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user: UserResponse
+    user: Optional[UserResponse] = None

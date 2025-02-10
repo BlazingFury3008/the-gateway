@@ -3,67 +3,96 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 
 export default function HeroSection() {
-  // Array of hero image paths
   const images = [
     "/static/Carousel-Images/Hunter_Logo_white.svg",
     "/static/Carousel-Images/VampireLogoBIGred.svg",
     "/static/Carousel-Images/WEREWOLF_NewLogo_white.svg",
   ];
 
-  // Duplicate the array to create a seamless loop effect
   const infiniteImages = [...images, ...images];
 
-  // State for tracking position
+  const invertConfig: Record<string, "always" | "dark-only" | "light-only" | "none"> = {
+    "/static/Carousel-Images/Hunter_Logo_white.svg": "light-only",
+    "/static/Carousel-Images/VampireLogoBIGred.svg": "none",
+    "/static/Carousel-Images/WEREWOLF_NewLogo_white.svg": "light-only",
+  };
+
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    };
+
+    checkDarkMode();
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex((prevIndex) => prevIndex + 1);
-    }, 5000); // Change image every 5 seconds
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 5000);
 
     return () => clearInterval(timer);
   }, []);
 
   return (
-    <section className="relative h-96 w-full overflow-hidden flex items-center justify-center mb-8">
+    <section className="relative min-h-[750px] md:min-h-[900px] w-full overflow-hidden flex items-center justify-center bg-[var(--color-background)] transition-colors duration-300">
       {/* Infinite Scrolling Image Slider */}
       <div
-        className="absolute inset-0 flex transition-transform duration-1000 ease-linear"
+        className="absolute inset-0 flex transition-transform duration-1000 ease-in-out"
         style={{
           transform: `translateX(-${(currentIndex % images.length) * 100}%)`,
         }}
       >
-        {infiniteImages.map((image, index) => (
-          <div
-            key={index}
-            className="w-full h-full flex-shrink-0 relative flex items-center justify-center opacity-85"
-          >
-            <Image
-              src={image}
-              alt={`Slide ${index + 1}`}
-              fill
-              priority={index === 0} // Prioritize first image for faster loading
-              className="object-contain w-auto h-auto max-w-full max-h-full"
-              quality={100}
-            />
-          </div>
-        ))}
+        {infiniteImages.map((image, index) => {
+          let invertClass = "";
+          if (invertConfig[image] === "always") {
+            invertClass = "invert";
+          } else if (invertConfig[image] === "dark-only" && isDarkMode) {
+            invertClass = "invert";
+          } else if (invertConfig[image] === "light-only" && !isDarkMode) {
+            invertClass = "invert";
+          }
+
+          return (
+            <div
+              key={index}
+              className="w-full h-full flex-shrink-0 relative flex items-center justify-center"
+            >
+              <Image
+                src={image}
+                alt={`Slide ${index + 1}`}
+                fill
+                priority={index === 0}
+                className={`py-16 object-contain w-auto h-auto max-w-full max-h-full transition-opacity duration-500 ${invertClass}`}
+                quality={100}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Overlay for better text contrast */}
-      <div className="absolute inset-0 bg-black opacity-50"></div>
+      <div className="absolute inset-0 bg-[var(--color-overlay)] transition-colors duration-300"></div>
 
       {/* Hero Text and Call-to-Action */}
-      <div className="absolute inset-0 flex flex-col justify-center items-center text-white text-center px-4">
-        <h1 className="text-4xl md:text-6xl font-bold">Welcome to The Gateway</h1>
-        <p className="mt-4 max-w-xl">
+      <div className="absolute inset-0 flex flex-col justify-center items-center text-outline text-[var(--color-foreground)] text-center px-6">
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-wide">
+          Welcome to The Gateway
+        </h1>
+        <p className="mt-6 max-w-2xl text-lg md:text-2xl font-medium leading-relaxed text-[var(--color-foreground-soft)]">
           Your ultimate hub for all things TTRPG and video game adventures.
           Whether you’re exploring new worlds or crafting your own, you’re in
           the right place.
         </p>
         <a
-          href="/explore"
-          className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-lg"
+          href="#discover"
+          className="mt-8 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-background)] px-8 py-4 rounded-full text-xl font-semibold shadow-lg transition"
         >
           Explore Now
         </a>

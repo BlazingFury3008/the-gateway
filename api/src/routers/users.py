@@ -38,7 +38,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": {
             "uuid": db_user.uuid,
-            "name": db_user.name,  # ✅ Include username
+            "name": db_user.name,  
             "email": db_user.email,
         },
     }

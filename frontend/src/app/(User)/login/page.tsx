@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import api from "@/lib/axios"; // Import global axios instance
+import api from "@/other/axios";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,7 +12,23 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
   const router = useRouter();
+  const { status } = useSession();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/profile");
+    }
+  }, [status, router]);
+
+  if (status !== "unauthenticated") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,21 +36,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Send login request using the global axios instance
-      const res = await api.post("/login", {
-        email,
-        password,
-      });
-
-      // Store token in localStorage
+      const res = await api.post("/login", { email, password });
       localStorage.setItem("access_token", res.data.access_token);
 
-      // Authenticate with NextAuth.js
-      const loginRes = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
+      const loginRes = await signIn("credentials", { email, password, redirect: false });
 
       if (loginRes?.error) {
         setError("Invalid email or password.");
@@ -48,8 +54,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background text-foreground transition-colors">
-      <div className="w-full max-w-md bg-background p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)] text-[var(--color-foreground)] transition-colors duration-300">
+      <div className="w-full max-w-md p-8 rounded-2xl shadow-lg border border-[var(--color-border)] transition bg-[var(--color-form)]">
         <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
@@ -57,7 +63,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email Field */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-foreground">
+            <label htmlFor="email" className="block text-sm font-medium text-[var(--color-foreground)]">
               Email
             </label>
             <input
@@ -66,13 +72,13 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border rounded-lg shadow-sm bg-background text-foreground border-gray-300 dark:border-gray-600 focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
+              className="input w-full px-3 py-2 border rounded-lg shadow-sm bg-[var(--color-background)] text-[var(--color-foreground)] border-[var(--color-border)] focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
             />
           </div>
 
           {/* Password Field with Show/Hide Toggle */}
           <div className="relative">
-            <label htmlFor="password" className="block text-sm font-medium text-foreground">
+            <label htmlFor="password" className="block text-sm font-medium text-[var(--color-foreground)]">
               Password
             </label>
             <input
@@ -81,7 +87,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 border rounded-lg shadow-sm bg-background text-foreground border-gray-300 dark:border-gray-600 focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
+              className="input w-full px-3 py-2 border rounded-lg shadow-sm bg-[var(--color-background)] text-[var(--color-foreground)] border-[var(--color-border)] focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
             />
             <button
               type="button"
@@ -102,14 +108,14 @@ export default function LoginPage() {
           </button>
 
           {/* Extra Links */}
-          <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-3">
+          <div className="text-center text-sm text-[var(--color-foreground)] mt-3">
             <p>
               <a href="/forgot-password" className="text-indigo-600 dark:text-indigo-400 hover:underline">
                 Forgot Password?
               </a>
             </p>
             <p className="mt-2">
-              Don't have an account?{" "}
+              Don&#39;t have an account?{" "}
               <a href="/signup" className="text-indigo-600 dark:text-indigo-400 hover:underline">
                 Sign Up
               </a>

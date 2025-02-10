@@ -2,24 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Default Light Mode */
+/* Light & Dark Mode Setup */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #1d3278; /* Updated Indigo (Darker for better contrast) */
+  --color-secondary: #0036ab; /* Blue */
+  --color-danger: #dc2626; /* Red */
+
+  /* Light Mode */
+  --color-background: #f8fafc; /* Soft Gray-White */
+  --color-foreground: #1e293b; /* Dark Gray-Blue */
+  --color-border: #cbd5e1; /* Light Gray */
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-form: #ffffff;
+
+  --color-primary-hover: #172554; /* Darker Indigo */
+  --color-secondary-hover: #0251f9; 
+  --color-background-hover: #e2e8f0; /* Lighter Gray */
+  --color-foreground-hover: #111827; /* Darker Gray */
+
+  --color-background-soft: #f1f5f9; /* Lightest Gray for subtle UI */
+  --color-foreground-soft: #334155; /* Muted Blue-Gray */
 }
 
 /* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --color-secondary: #0547d4; /* Blue */
+
+  --color-background: #04070e; /* Deep Navy */
+  --color-foreground: #f8fafc; /* Soft White */
+  --color-border: #353e4a; /* Medium Blue-Gray */
+  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-form: #0e131b; /* Darker Blue-Gray */
+
+  --color-primary-hover: #3e61c3; /* Soft Indigo */
+  --color-secondary-hover: #0251f9; 
+  --color-background-hover: #222a36; /* Darker Gray-Blue */
+  --color-foreground-hover: #eeefef; /* Muted Soft White */
+
+  --color-background-soft: #050608; /* Darker Soft UI */
+  --color-foreground-soft: #94a3b8; /* Muted Gray-Blue */
 }
 
-/* Apply the colors to the body */
+.text-outline h1 {
+  -webkit-text-stroke: 2px var(--color-background); /* For h1 text */
+  color: var(--color-foreground);
+}
+
+.text-outline p {
+  -webkit-text-stroke: .8px var(--color-background); /* Thinner outline for paragraphs */
+  color: var(--color-foreground);
+  font-size: 28px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+
+
+
+
+
+
+/* Global Styling */
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.3s, color 0.3s;
+  @apply bg-[var(--color-background)] text-[var(--color-foreground)] font-sans antialiased transition-colors duration-300;
+}
+
+/* Buttons */
+.btn {
+  @apply px-4 py-2 rounded-lg transition-all duration-200 font-medium;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-500;
+}
+
+/* Forms */
+.input {
+  @apply w-full px-3 py-2 border rounded-lg bg-[var(--color-background)] text-[var(--color-foreground)] border-[var(--color-border)] focus:outline-none focus:ring focus:ring-blue-500;
+}
+
+/* Sidebar */
+.sidebar {
+  @apply fixed top-0 left-0 h-full min-h-screen w-64 bg-gray-900 text-white shadow-lg dark:bg-gray-800;
+}
+
+/* Navbar */
+.navbar {
+  @apply fixed top-0 left-0 w-full bg-gray-900 text-white shadow-md px-6 py-4 z-50 border-b border-[var(--color-border)] dark:bg-gray-800;
+}
+
+.navbar-link {
+  @apply text-[var(--color-foreground)] hover:text-blue-400;
+}
+
+/* Cards */
+.card {
+  @apply bg-[var(--color-background)] p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-[var(--color-foreground)];
+}
+
+/* Footer */
+.footer {
+  @apply bg-gray-900 text-gray-400 py-6 text-center dark:bg-gray-800;
 }

@@ -22,14 +22,12 @@ export const metadata: Metadata = {
   keywords: ["TTRPG", "Game Development", "Character Manager", "Worldbuilding", "Next.js", "React"],
 };
 
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-[family-name:var(--font-geist-mono)] select-none bg-black`}>
-        {/* Wrap with Client Component for SessionProvider */}
         <SessionProviderWrapper>
           <Navbar />
           <div className="">{children}</div>
