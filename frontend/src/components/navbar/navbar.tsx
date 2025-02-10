@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -10,14 +10,34 @@ import Image from "next/image";
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
 export default function Navbar() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null); // Ref to track dropdown menu
 
   const handleLogout = async () => {
-    await signOut({ redirect: false });
-    router.replace("/");
+    setDropdownOpen(false);
+    await signOut({ redirect: false }); // Prevents full page reload
+    router.replace("/"); // Smoothly redirects to home
+    await update(); // Refreshes session state
   };
+
+  // Close dropdown if clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   return (
     <>
@@ -35,7 +55,7 @@ export default function Navbar() {
             {status === "loading" ? (
               <div className="w-24 h-10 bg-gray-300 dark:bg-gray-700 animate-pulse rounded-lg"></div>
             ) : session?.user ? (
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 {/* User Button */}
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
