@@ -18,17 +18,17 @@ export default function EmailForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="max-w-lg w-full bg-white p-8 rounded-2xl shadow-lg">
-        <h2 className="text-2xl font-semibold mb-6 text-center">Contact Us</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="max-w-lg w-full bg-gray-800 p-8 rounded-2xl shadow-lg">
+        <h2 className="text-2xl font-semibold mb-6 text-center text-white">Contact Me</h2>
 
         {submitted ? (
-          <p className="text-green-600 text-center">Thank you for your message!</p>
+          <p className="text-green-400 text-center">Thank you for your message!</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name Field */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-300">
                 Name
               </label>
               <input
@@ -37,13 +37,13 @@ export default function EmailForm() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:ring-indigo-300"
+                className="w-full px-3 py-2 border rounded-lg bg-gray-700 text-white shadow-sm focus:outline-none focus:ring focus:ring-indigo-500"
               />
             </div>
 
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
                 Email
               </label>
               <input
@@ -52,13 +52,13 @@ export default function EmailForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:ring-indigo-300"
+                className="w-full px-3 py-2 border rounded-lg bg-gray-700 text-white shadow-sm focus:outline-none focus:ring focus:ring-indigo-500"
               />
             </div>
 
             {/* Subject Field */}
             <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="subject" className="block text-sm font-medium text-gray-300">
                 Subject
               </label>
               <input
@@ -67,13 +67,13 @@ export default function EmailForm() {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 required
-                className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:ring-indigo-300"
+                className="w-full px-3 py-2 border rounded-lg bg-gray-700 text-white shadow-sm focus:outline-none focus:ring focus:ring-indigo-500"
               />
             </div>
 
             {/* Content Field */}
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="content" className="block text-sm font-medium text-gray-300">
                 Content
               </label>
               <textarea
@@ -82,7 +82,7 @@ export default function EmailForm() {
                 onChange={(e) => setContent(e.target.value)}
                 required
                 rows={5}
-                className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring focus:ring-indigo-300"
+                className="w-full px-3 py-2 border rounded-lg bg-gray-700 text-white shadow-sm focus:outline-none focus:ring focus:ring-indigo-500"
               />
             </div>
 

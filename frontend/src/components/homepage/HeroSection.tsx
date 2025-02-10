@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 
 export default function HeroSection() {
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const transitionDuration = 5000;
+
   const images = [
     "/static/Carousel-Images/Hunter_Logo_white.svg",
     "/static/Carousel-Images/VampireLogoBIGred.svg",
@@ -40,13 +43,27 @@ export default function HeroSection() {
     return () => clearInterval(timer);
   }, []);
 
+  // When reaching the duplicate image, reset the index **without transition**
+  useEffect(() => {
+    if (currentIndex === images.length) {
+      setTimeout(() => {
+        setIsTransitioning(false); // Disable transition
+        setCurrentIndex(0); // Reset index instantly
+
+        // Re-enable transition after a slight delay
+        setTimeout(() => setIsTransitioning(true), 50);
+      }, transitionDuration);
+    }
+  }, [currentIndex]);
+
   return (
     <section className="relative min-h-[750px] md:min-h-[900px] w-full overflow-hidden flex items-center justify-center bg-[var(--color-background)] transition-colors duration-300">
       {/* Infinite Scrolling Image Slider */}
       <div
         className="absolute inset-0 flex transition-transform duration-1000 ease-in-out"
         style={{
-          transform: `translateX(-${(currentIndex % images.length) * 100}%)`,
+          transform: `translateX(-${currentIndex * 100}%)`,
+          transition: isTransitioning ? `transform ${transitionDuration}ms ease-in-out` : "none",
         }}
       >
         {infiniteImages.map((image, index) => {
