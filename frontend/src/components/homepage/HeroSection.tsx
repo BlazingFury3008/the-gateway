@@ -56,7 +56,7 @@ export default function HeroSection() {
   }, [currentIndex]);
 
   return (
-    <section className="relative min-h-[750px] md:min-h-[900px] w-full overflow-hidden flex items-center justify-center bg-[var(--color-background)] transition-colors duration-300">
+    <section className="relative min-h-[600px] md:min-h-[900px] w-full overflow-hidden flex items-center justify-center bg-[var(--color-background)] transition-colors duration-300">
       {/* Infinite Scrolling Image Slider */}
       <div
         className="absolute inset-0 flex transition-transform ease-in-out"
@@ -102,7 +102,7 @@ export default function HeroSection() {
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-wide">
           Welcome to The Gateway
         </h1>
-        <p className="mt-6 max-w-2xl text-lg md:text-2xl font-medium leading-relaxed text-[var(--color-foreground-soft)]">
+        <p className="mt-6 max-w-2xl text-lg md:text-2xl xs:text-md font-medium leading-relaxed text-[var(--color-foreground-soft)]">
           Your ultimate hub for all things TTRPG and video game adventures.
           Whether you’re exploring new worlds or crafting your own, you’re in
           the right place.

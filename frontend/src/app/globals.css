@@ -51,7 +51,6 @@
 .text-outline p {
   -webkit-text-stroke: .8px var(--color-background); /* Thinner outline for paragraphs */
   color: var(--color-foreground);
-  font-size: 28px;
 }
 
 html {

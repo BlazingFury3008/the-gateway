@@ -7,7 +7,9 @@ from models import User
 from auth import hash_password, verify_password, create_access_token
 from schemas import UserCreate, UserResponse, Token, UserLogin
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Users"]
+)
 
 @router.post("/signup", response_model=Token)
 def signup(user: UserCreate, db: Session = Depends(get_db)):
