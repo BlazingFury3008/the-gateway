@@ -2,7 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import users
 
-app = FastAPI()
+app = FastAPI(
+    title="The Gateway API",
+    description="API for The Gateway website",
+    version="1.0.0",
+    openapi_tags=[
+        {"name": "Users", "description": "User related operations"},    ]
+)
 
 origins = [
     "http://localhost:3000",  # Frontend running on Next.js (development)
@@ -13,7 +19,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Allows all origins (change this in production)
+    allow_origins=["*"],  # Allows all origins (change this in production)
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, etc.)
     allow_headers=["*"],  # Allows all headers

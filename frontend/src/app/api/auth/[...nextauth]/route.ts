@@ -2,8 +2,12 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
 
+
+// Access the variable
+const BACKEND_URL = process.env.HOST_URL;
+
 // ✅ Replace `process.env.NEXT_PUBLIC_BACKEND_URL` with your actual backend URL
-const BACKEND_URL = "http://localhost:8000";  // Change this for production
+//const BACKEND_URL = "http://localhost:8000";  // Change this for production
 
 const handler = NextAuth({
   providers: [

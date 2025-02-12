@@ -34,17 +34,17 @@ export default function OptionsBox({
           >
             {title}
           </h2>
-          {/* Description */}
-          <p
+            {/* Description */}
+            <p
             className="text-[var(--color-foreground-soft)] transition-all duration-300 
-                        group-hover:text-[var(--color-foreground-hover)]"
+                        group-hover:text-[var(--color-foreground-hover)] hidden sm:block"
           >
             {desc}
           </p>
           {/* Link */}
           <span
-            className="inline-block mt-2 text-[var(--color-primary)] hover:underline transition-all duration-300 
-                           group-hover:text-[var(--color-primary-hover)]"
+            className=" mt-2 text-[var(--color-primary)] hover:underline transition-all duration-300 
+                           group-hover:text-[var(--color-primary-hover)] hidden sm:inline-block"
           >
             {linkText}
           </span>

@@ -38,8 +38,10 @@ export default function LoginPage() {
     try {
       const res = await api.post("/login", { email, password });
       localStorage.setItem("access_token", res.data.access_token);
+      console.log(res)
 
       const loginRes = await signIn("credentials", { email, password, redirect: false });
+      console.log(loginRes)
 
       if (loginRes?.error) {
         setError("Invalid email or password.");
@@ -47,7 +49,7 @@ export default function LoginPage() {
         router.push("/"); // Redirect to dashboard
       }
     } catch (error: any) {
-      setError(error.response?.data?.detail || "An error occurred.");
+      setError("An error occurred.");
     } finally {
       setLoading(false);
     }
