@@ -2,49 +2,51 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
 
-
-// Access the variable
-const BACKEND_URL = process.env.HOST_URL;
-
-// ✅ Replace `process.env.NEXT_PUBLIC_BACKEND_URL` with your actual backend URL
-//const BACKEND_URL = "http://localhost:8000";  // Change this for production
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        email: { label: "Email", type: "text", placeholder: "example@email.com" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required.");
+        }
+
         try {
           const res = await axios.post(`${BACKEND_URL}/login`, {
-            email: credentials?.email,
-            password: credentials?.password,
+            email: credentials.email,
+            password: credentials.password,
           });
 
           if (res.data.access_token) {
             return {
-              id: res.data.access_token,
-              name: res.data.user.name,  // ✅ Get username
+              id: res.data.user.id,  // Ensure ID is correctly stored
+              name: res.data.user.name,
               email: res.data.user.email,
               accessToken: res.data.access_token,
             };
           }
           return null;
-        } catch (error) {
+        } catch (error: any) {
+          console.error("Login error:", error.response?.data || error.message);
           throw new Error("Invalid credentials");
         }
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.accessToken = user.accessToken;
-        token.name = user.name;  // ✅ Store username
+        token.name = user.name;
         token.email = user.email;
       }
       return token;
@@ -52,13 +54,13 @@ const handler = NextAuth({
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.user = {
-        name: token.name,  // ✅ Ensure username is in session
+        name: token.name,
         email: token.email,
       };
       return session;
     },
   },
-  secret: "your_secret_key",  // Replace with an actual secret key
+  secret: process.env.NEXTAUTH_SECRET, // Secure secret from environment variables
 });
 
 export { handler as GET, handler as POST };

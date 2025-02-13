@@ -56,7 +56,7 @@ export default function HeroSection() {
   }, [currentIndex]);
 
   return (
-    <section className="relative min-h-[600px] md:min-h-[900px] w-full overflow-hidden flex items-center justify-center bg-[var(--color-background)] transition-colors duration-300">
+    <section className="relative min-h-[600px] md:min-h-[900px] w-full overflow-hidden flex items-center justify-center bg-[var(--color-background-soft)] transition-colors duration-300">
       {/* Infinite Scrolling Image Slider */}
       <div
         className="absolute inset-0 flex transition-transform ease-in-out"

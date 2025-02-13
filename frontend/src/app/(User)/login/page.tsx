@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import api from "@/other/axios";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -36,20 +37,26 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // API call to login
       const res = await api.post("/login", { email, password });
-      localStorage.setItem("access_token", res.data.access_token);
-      console.log(res)
 
+      console.log("Login Response:", res);
+
+      localStorage.setItem("access_token", res.data.access_token);
+
+      // Authenticate with NextAuth
       const loginRes = await signIn("credentials", { email, password, redirect: false });
-      console.log(loginRes)
+
+      console.log("SignIn Response:", loginRes);
 
       if (loginRes?.error) {
         setError("Invalid email or password.");
       } else {
-        router.push("/"); // Redirect to dashboard
+        router.push("/dashboard"); // Redirect after login
       }
     } catch (error: any) {
-      setError("An error occurred.");
+      console.error("Login Error:", error);
+      setError(error.response?.data?.detail || "An error occurred.");
     } finally {
       setLoading(false);
     }
@@ -57,7 +64,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)] text-[var(--color-foreground)] transition-colors duration-300">
-      <div className="w-full max-w-md p-8 rounded-2xl shadow-lg border border-[var(--color-border)] transition bg-[var(--color-form)]">
+      <div className="w-full max-w-md p-8 rounded-2xl shadow-lg border border-[var(--color-border)] bg-[var(--color-form)]">
         <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
@@ -74,7 +81,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="input w-full px-3 py-2 border rounded-lg shadow-sm bg-[var(--color-background)] text-[var(--color-foreground)] border-[var(--color-border)] focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
+              className="input"
             />
           </div>
 
@@ -89,7 +96,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="input w-full px-3 py-2 border rounded-lg shadow-sm bg-[var(--color-background)] text-[var(--color-foreground)] border-[var(--color-border)] focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
+              className="input pr-10"
             />
             <button
               type="button"
@@ -101,26 +108,22 @@ export default function LoginPage() {
           </div>
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-500 transition"
-            disabled={loading}
-          >
+          <button type="submit" className="btn btn-primary w-full" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
           </button>
 
           {/* Extra Links */}
           <div className="text-center text-sm text-[var(--color-foreground)] mt-3">
             <p>
-              <a href="/forgot-password" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+              <Link href="/forgot-password" className="text-[var(--color-secondary)] hover:underline">
                 Forgot Password?
-              </a>
+              </Link>
             </p>
             <p className="mt-2">
               Don&#39;t have an account?{" "}
-              <a href="/signup" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+              <Link href="/signup" className="text-[var(--color-secondary)] hover:underline">
                 Sign Up
-              </a>
+              </Link>
             </p>
           </div>
         </form>

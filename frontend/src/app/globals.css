@@ -8,12 +8,14 @@
   --color-secondary: #0036ab; /* Blue */
   --color-danger: #dc2626; /* Red */
 
+  --color-tertiary: #000000;
+
   /* Light Mode */
-  --color-background: #f8fafc; /* Soft Gray-White */
-  --color-foreground: #1e293b; /* Dark Gray-Blue */
+  --color-background: #efefef; /* Soft Gray-White */
+  --color-foreground: #090d13; /* Dark Gray-Blue */
   --color-border: #cbd5e1; /* Light Gray */
   --color-shadow: rgba(0, 0, 0, 0.1);
-  --color-form: #ffffff;
+  --color-form: #fcfcf6;
 
   --color-primary-hover: #172554; /* Darker Indigo */
   --color-secondary-hover: #0251f9; 
@@ -27,6 +29,8 @@
 /* Dark Mode */
 .dark {
   --color-secondary: #0547d4; /* Blue */
+
+  --color-tertiary: #000000;
 
   --color-background: #04070e; /* Deep Navy */
   --color-foreground: #f8fafc; /* Soft White */
@@ -56,8 +60,6 @@
 html {
   scroll-behavior: smooth;
 }
-
-
 
 
 

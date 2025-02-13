@@ -18,7 +18,7 @@ export default function OptionsBox({
     <Link
       href={link}
       className="group block p-6 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 hover:shadow-lg
-                 bg-[var(--color-background-soft)] hover:bg-[var(--color-background-hover)] 
+                 bg-[var(--color-form)] hover:bg-[var(--color-background-hover)] 
                  border border-[var(--color-border)]"
     >
       <div className="flex items-center space-x-4">

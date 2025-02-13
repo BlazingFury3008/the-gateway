@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import api from "@/other/axios";
+import Link from "next/link";
 
 export default function SignupPage() {
   const [username, setUsername] = useState("");
@@ -18,16 +19,13 @@ export default function SignupPage() {
   const router = useRouter();
   const { status } = useSession();
 
-
   useEffect(() => {
     if (status === "authenticated") {
       router.push("/profile");
     }
   }, [status, router]);
-  
 
-    
-  if (status !== "unauthenticated" ) {
+  if (status !== "unauthenticated") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
@@ -47,12 +45,14 @@ export default function SignupPage() {
     }
 
     try {
-      // Send signup request using the global axios instance
+      // Send signup request using Axios
       const res = await api.post("/signup", {
         name: username,
         email,
         password,
       });
+
+      console.log("Signup Response:", res);
 
       // Store token in localStorage
       localStorage.setItem("access_token", res.data.access_token);
@@ -70,23 +70,24 @@ export default function SignupPage() {
         router.push("/dashboard"); // Redirect after login
       }
     } catch (error: any) {
-      setError(JSON.stringify(error.response?.data?.detail) || "An error occurred.");
+      console.error("Signup Error:", error);
+      setError(error.response?.data?.detail || "An error occurred.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background text-foreground transition-colors">
-      <div className="w-full max-w-md bg-background p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)] text-[var(--color-foreground)] transition-colors">
+      <div className="w-full max-w-md bg-[var(--color-form)] p-8 rounded-2xl shadow-lg border border-[var(--color-border)]">
         <h2 className="text-2xl font-semibold text-center mb-6">Sign Up</h2>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 bg-[">
           {/* Username Field */}
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-foreground">
+            <label htmlFor="username" className="block text-sm font-medium text-[var(--color-foreground)]">
               Username
             </label>
             <input
@@ -95,13 +96,13 @@ export default function SignupPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              className="w-full px-3 py-2 border rounded-lg shadow-sm bg-background text-foreground border-gray-300 dark:border-gray-600 focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
+              className="input"
             />
           </div>
 
           {/* Email Field */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-foreground">
+            <label htmlFor="email" className="block text-sm font-medium text-[var(--color-foreground)]">
               Email
             </label>
             <input
@@ -110,13 +111,13 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 border rounded-lg shadow-sm bg-background text-foreground border-gray-300 dark:border-gray-600 focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
+              className="input"
             />
           </div>
 
           {/* Password Field with Show/Hide Toggle */}
           <div className="relative">
-            <label htmlFor="password" className="block text-sm font-medium text-foreground">
+            <label htmlFor="password" className="block text-sm font-medium text-[var(--color-foreground)]">
               Password
             </label>
             <input
@@ -125,12 +126,12 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 border rounded-lg shadow-sm bg-background text-foreground border-gray-300 dark:border-gray-600 focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
+              className="input pr-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-10 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              className="absolute right-3 top-9 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             >
               {showPassword ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
             </button>
@@ -138,7 +139,7 @@ export default function SignupPage() {
 
           {/* Confirm Password Field */}
           <div className="relative">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-[var(--color-foreground)]">
               Confirm Password
             </label>
             <input
@@ -147,23 +148,19 @@ export default function SignupPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 border rounded-lg shadow-sm bg-background text-foreground border-gray-300 dark:border-gray-600 focus:outline-none focus:ring focus:ring-indigo-300 dark:focus:ring-indigo-500"
+              className="input pr-10"
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-10 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              className="absolute right-3 top-9 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             >
               {showConfirmPassword ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
             </button>
           </div>
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-500 transition"
-            disabled={loading}
-          >
+          <button type="submit" className="btn btn-primary w-full" disabled={loading}>
             {loading ? "Signing Up..." : "Sign Up"}
           </button>
 
@@ -171,9 +168,9 @@ export default function SignupPage() {
           <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-3">
             <p>
               Already have an account?{" "}
-              <a href="/login" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+              <Link href="/login" className="text-[var(--color-secondary)] hover:underline">
                 Login
-              </a>
+              </Link>
             </p>
           </div>
         </form>

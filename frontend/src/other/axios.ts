@@ -1,10 +1,7 @@
 import axios from "axios";
 
-// Access the variable
-const BACKEND_URL = process.env.HOST_URL;
-
-// ✅ Set your backend URL here
-//const BACKEND_URL = "http://localhost:8000";  // Change for production
+// Use the correct environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const api = axios.create({
   baseURL: BACKEND_URL,

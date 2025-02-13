@@ -1,7 +1,6 @@
 import axios from "axios";
 
-// Backend URL (Modify for production)
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 // Create Axios instance
 const api = axios.create({
@@ -9,17 +8,27 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Ensures cookies/session handling
 });
 
-// Automatically attach authentication token to requests (if available)
-api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+// Attach authentication token automatically to requests
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      try {
+        const token = localStorage.getItem("access_token")?.replace(/^"(.*)"$/, "$1"); // Remove quotes
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.error("Error retrieving token:", error);
+      }
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 export default api;
