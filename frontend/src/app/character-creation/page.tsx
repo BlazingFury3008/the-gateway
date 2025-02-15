@@ -6,19 +6,24 @@ import { gameSystems } from "./gameSystems";
 
 export default function CharacterCreationPage() {
   const [filterText, setFilterText] = useState("");
+  const [filterEnabled, setFilterEnabled] = useState(false);
   const [filterSelection, setFilterSelections] = useState(gameSystems);
 
   useEffect(() => {
-    if (filterText.trim() === "") {
-      setFilterSelections(gameSystems); // Show all when search is empty
-    } else {
-      setFilterSelections(
-        gameSystems.filter((val) =>
-          val.title.toLowerCase().includes(filterText.toLowerCase())
-        )
+    let filteredSystems = gameSystems;
+
+    if (filterText.trim() !== "") {
+      filteredSystems = filteredSystems.filter((val) =>
+        val.title.toLowerCase().includes(filterText.toLowerCase())
       );
     }
-  }, [filterText]);
+
+    if (filterEnabled) {
+      filteredSystems = filteredSystems.filter((val) => val.enabled);
+    }
+
+    setFilterSelections(filteredSystems);
+  }, [filterText, filterEnabled]);
 
   return (
     <div className="min-h-screen py-12 px-6 bg-[var(--color-background-soft)] text-[var(--color-foreground)] transition-colors duration-300">
@@ -30,8 +35,8 @@ export default function CharacterCreationPage() {
           Search and select a game system to start creating your character.
         </p>
 
-        {/* SEARCH INPUT */}
-        <div className="flex justify-center mb-10">
+        {/* SEARCH INPUT AND FILTER TOGGLE */}
+        <div className="flex flex-col sm:flex-row items-center justify-center mb-10 gap-4">
           <input
             type="text"
             value={filterText}
@@ -39,6 +44,15 @@ export default function CharacterCreationPage() {
             placeholder="Search game systems..."
             className="w-full max-w-lg px-4 py-3 text-lg bg-[var(--color-form)] border border-[var(--color-border)] rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all duration-200"
           />
+          <label className="flex items-center gap-2 text-lg">
+            <input
+              type="checkbox"
+              checked={filterEnabled}
+              onChange={(e) => setFilterEnabled(e.target.checked)}
+              className="w-5 h-5 text-[var(--color-primary)] bg-[var(--color-form)] border border-[var(--color-border)] rounded focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer transition-all duration-200"
+            />
+            Show only available
+          </label>
         </div>
 
         {/* GAME SYSTEM GRID OR MESSAGE */}
@@ -55,6 +69,7 @@ export default function CharacterCreationPage() {
                 icon={system.icon}
                 link={system.link}
                 bgColor={system.bgColor}
+                enabled={system.enabled}
               />
             ))}
           </div>
