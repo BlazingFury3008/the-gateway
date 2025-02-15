@@ -8,6 +8,7 @@ interface GameSystem {
   icon: React.ReactNode;
   link: string;
   bgColor: string;
+  enabled: boolean;
 }
 
 export const gameSystems: GameSystem[] = [
@@ -17,6 +18,7 @@ export const gameSystems: GameSystem[] = [
     icon: <GiFangs />,
     link: "/character-creation/vtm20",
     bgColor: "rgba(39, 116, 75, 0.8)",
+    enabled: true,
   },
   {
     title: "Werewolf: The Apocalypse 20th Edition",
@@ -24,6 +26,7 @@ export const gameSystems: GameSystem[] = [
     icon: <GiClawSlashes />,
     link: "/character-creation/wta20",
     bgColor: "rgba(184, 159, 0, 0.8)",
+    enabled: false,
   },
   {
     title: "Hunter: The Reckoning 20th Edition",
@@ -31,6 +34,7 @@ export const gameSystems: GameSystem[] = [
     icon: <GiTargetArrows />,
     link: "/character-creation/htr20",
     bgColor: "rgba(254, 124, 32, 0.8)",
+    enabled: false,
   },
   {
     title: "Mage: The Ascension 20th Edition",
@@ -38,6 +42,7 @@ export const gameSystems: GameSystem[] = [
     icon: <FaBook />,
     link: "/character-creation/mta20",
     bgColor: "rgba(75, 0, 130, 0.8)",
+    enabled: false,
   },
   {
     title: "Vampire: The Masquerade 5th Edition",
@@ -45,6 +50,7 @@ export const gameSystems: GameSystem[] = [
     icon: <GiFangs />,
     link: "/character-creation/vtm5",
     bgColor: "rgba(130, 0, 0, 0.8)",
+    enabled: false,
   },
   {
     title: "Cyberpunk RED",
@@ -52,5 +58,7 @@ export const gameSystems: GameSystem[] = [
     icon: <FaTerminal />,
     link: "/character-creation/cyberpunk-red",
     bgColor: "rgba(231, 76, 60, 0.8)",
+    enabled: false,
+
   },
 ];

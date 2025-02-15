@@ -13,9 +13,9 @@
   /* Light Mode */
   --color-background: #efefef; /* Soft Gray-White */
   --color-foreground: #090d13; /* Dark Gray-Blue */
-  --color-border: #cbd5e1; /* Light Gray */
+  --color-border: #d1d5db; /* Light Gray */
   --color-shadow: rgba(0, 0, 0, 0.1);
-  --color-form: #fcfcf6;
+  --color-form: #f5f5f5;
 
   --color-primary-hover: #172554; /* Darker Indigo */
   --color-secondary-hover: #0251f9; 
@@ -23,7 +23,7 @@
   --color-foreground-hover: #111827; /* Darker Gray */
 
   --color-background-soft: #dbdbdb; /* Lightest Gray for subtle UI */
-  --color-foreground-soft: #334155; /* Muted Blue-Gray */
+  --color-foreground-soft: #374151; /* Muted Blue-Gray */
 }
 
 /* Dark Mode */
