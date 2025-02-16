@@ -17,6 +17,7 @@ export default function SidebarButton({ label, icon: Icon, href, variant = "defa
 
   return (
     <Link
+    
       href={href}
       className={`${baseStyles} ${variant === "danger" ? dangerStyles : defaultStyles}`}
     >

@@ -16,6 +16,7 @@ export default function OptionsBox({
 }) {
   return (
     <Link
+    
       href={link}
       className="group block p-6 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 hover:shadow-lg
                  bg-[var(--color-form)] hover:bg-[var(--color-background-hover)] 

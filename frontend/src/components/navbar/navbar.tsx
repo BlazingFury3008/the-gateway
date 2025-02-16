@@ -46,6 +46,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             href="/"
+            scroll={true}
             className="text-2xl font-bold transition-transform duration-300 hover:scale-105"
           >
             The Gateway
@@ -82,7 +83,7 @@ export default function Navbar() {
                       <p className="px-4 py-2 text-sm text-[var(--color-foreground)]">
                         {session.user.name}
                       </p>
-                      <Link href="/profile" onClick={() => setDropdownOpen(false)}>
+                      <Link href="/profile"  onClick={() => setDropdownOpen(false)}>
                         <p className="px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer transition">
                           Edit Profile
                         </p>

@@ -18,7 +18,7 @@ export const gameSystems: GameSystem[] = [
     icon: <GiFangs />,
     link: "/character-creation/vtm20",
     bgColor: "rgba(39, 116, 75, 0.8)",
-    enabled: true,
+    enabled: false,
   },
   {
     title: "Werewolf: The Apocalypse 20th Edition",
@@ -50,7 +50,7 @@ export const gameSystems: GameSystem[] = [
     icon: <GiFangs />,
     link: "/character-creation/vtm5",
     bgColor: "rgba(130, 0, 0, 0.8)",
-    enabled: false,
+    enabled: true,
   },
   {
     title: "Cyberpunk RED",

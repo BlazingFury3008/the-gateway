@@ -1,25 +1,33 @@
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+import mysql.connector
 from dotenv import load_dotenv
+from contextlib import contextmanager
+import os
 
 # Load environment variables
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# MySQL Credentials
+db_host = os.getenv('DB_HOST', '92.205.5.205')
+db_user = os.getenv('DB_USER', 'aiden')
+db_password = os.getenv('DB_PASSWORD', 'Dasher123@bc')
+db_database = os.getenv('DB_DATABASE', 'theGateway')
 
-if DATABASE_URL is None:
-    raise ValueError("DATABASE_URL is not set. Please check your .env file.")
+# Get MySQL Connection
+def get_mysql_connection():
+    return mysql.connector.connect(
+        host=db_host,
+        user=db_user,
+        password=db_password,
+        database=db_database
+    )
 
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-# Dependency for DB session
-def get_db():
-    db = SessionLocal()
+# Dependency for MySQL
+@contextmanager
+def get_mysql_db():
+    connection = get_mysql_connection()
+    cursor = connection.cursor(dictionary=True)  # Returns results as dictionaries
     try:
-        yield db
+        yield connection, cursor
     finally:
-        db.close()
+        cursor.close()
+        connection.close()
