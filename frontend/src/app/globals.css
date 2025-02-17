@@ -4,66 +4,44 @@
 
 /* Light & Dark Mode Setup */
 :root {
-  --color-primary: #1d3278; /* Updated Indigo (Darker for better contrast) */
-  --color-secondary: #0036ab; /* Blue */
-  --color-danger: #dc2626; /* Red */
-
-  --color-tertiary: #000000;
+  --color-primary: #1d3278;
+  --color-secondary: #0036ab;
+  --color-danger: #dc2626;
 
   /* Light Mode */
-  --color-background: #efefef; /* Soft Gray-White */
-  --color-foreground: #090d13; /* Dark Gray-Blue */
-  --color-border: #d1d5db; /* Light Gray */
+  --color-background: #efefef;
+  --color-foreground: #090d13;
+  --color-border: #c0c4cc; /* Adjusted for more visibility */
   --color-shadow: rgba(0, 0, 0, 0.1);
   --color-form: #f5f5f5;
 
-  --color-primary-hover: #172554; /* Darker Indigo */
-  --color-secondary-hover: #0251f9; 
-  --color-background-hover: #e2e8f0; /* Lighter Gray */
-  --color-foreground-hover: #111827; /* Darker Gray */
+  --color-primary-hover: #172554;
+  --color-secondary-hover: #0251f9;
+  --color-background-hover: #e6e9ef; /* Slightly darker than background */
+  --color-foreground-hover: #111827;
 
-  --color-background-soft: #dbdbdb; /* Lightest Gray for subtle UI */
-  --color-foreground-soft: #374151; /* Muted Blue-Gray */
+  --color-background-soft: #dadada;
+  --color-foreground-soft: #374151;
 }
 
 /* Dark Mode */
 .dark {
-  --color-secondary: #0547d4; /* Blue */
+  --color-secondary: #0547d4;
 
-  --color-tertiary: #000000;
-
-  --color-background: #04070e; /* Deep Navy */
-  --color-foreground: #f8fafc; /* Soft White */
-  --color-border: #353e4a; /* Medium Blue-Gray */
+  --color-background: #04070e;
+  --color-foreground: #d0d4dc; /* Slightly softer than pure white */
+  --color-border: rgba(255, 255, 255, 0.15); /* Softer for visibility */
   --color-shadow: rgba(0, 0, 0, 0.3);
-  --color-form: #0e131b; /* Darker Blue-Gray */
+  --color-form: #0e131b;
 
-  --color-primary-hover: #3e61c3; /* Soft Indigo */
-  --color-secondary-hover: #0251f9; 
-  --color-background-hover: #222a36; /* Darker Gray-Blue */
-  --color-foreground-hover: #eeefef; /* Muted Soft White */
+  --color-primary-hover: #3e61c3;
+  --color-secondary-hover: #0251f9;
+  --color-background-hover: #19202c; /* More contrast from background */
+  --color-foreground-hover: #f5f6f7;
 
-  --color-background-soft: #050608; /* Darker Soft UI */
-  --color-foreground-soft: #94a3b8; /* Muted Gray-Blue */
+  --color-background-soft: #090c13;
+  --color-foreground-soft: #a0a7b8; /* Better contrast */
 }
-
-.text-outline h1 {
-  -webkit-text-stroke: 2px var(--color-background); /* For h1 text */
-  color: var(--color-foreground);
-}
-
-.text-outline p {
-  -webkit-text-stroke: .8px var(--color-background); /* Thinner outline for paragraphs */
-  color: var(--color-foreground);
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-
-
-
 
 /* Global Styling */
 body {
@@ -110,4 +88,81 @@ body {
 /* Footer */
 .footer {
   @apply bg-gray-900 text-gray-400 py-6 text-center dark:bg-gray-800;
+}
+
+/* Clan Symbol Fix */
+.clan-symbol {
+  filter: var(--clan-symbol-filter);
+}
+
+/* Ensure clan symbols adapt to mode */
+:root {
+  --clan-symbol-filter: brightness(0);
+}
+
+.dark {
+  --clan-symbol-filter: brightness(0) invert(1);
+}
+
+/* Modal Animations */
+@keyframes modalOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes modalClose {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+.modal-enter {
+  @apply opacity-0 scale-95;
+  animation: modalOpen 0.2s ease-out forwards;
+}
+
+.modal-exit {
+  @apply opacity-100 scale-100;
+  animation: modalClose 0.2s ease-in forwards;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.2s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.2s ease-out;
 }
