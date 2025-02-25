@@ -47,12 +47,10 @@ export default function SignupPage() {
     try {
       // Send signup request using Axios
       const res = await api.post("/signup", {
-        name: username,
+        username,
         email,
         password,
       });
-
-      console.log("Signup Response:", res);
 
       // Store token in localStorage
       localStorage.setItem("access_token", res.data.access_token);

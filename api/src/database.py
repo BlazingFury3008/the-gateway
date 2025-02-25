@@ -1,33 +1,20 @@
-import mysql.connector
-from dotenv import load_dotenv
-from contextlib import contextmanager
-import os
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from config import DATABASE_URL
 
-# Load environment variables
-load_dotenv()
+# Initialize database connection
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+metadata = MetaData()
 
-# MySQL Credentials
-db_host = os.getenv('DB_HOST', '92.205.5.205')
-db_user = os.getenv('DB_USER', 'aiden')
-db_password = os.getenv('DB_PASSWORD', 'Dasher123@bc')
-db_database = os.getenv('DB_DATABASE', 'theGateway')
+# Load metadata (table structures)
+metadata.reflect(bind=engine)
+Base = declarative_base()
 
-# Get MySQL Connection
-def get_mysql_connection():
-    return mysql.connector.connect(
-        host=db_host,
-        user=db_user,
-        password=db_password,
-        database=db_database
-    )
-
-# Dependency for MySQL
-@contextmanager
-def get_mysql_db():
-    connection = get_mysql_connection()
-    cursor = connection.cursor(dictionary=True)  # Returns results as dictionaries
+def get_db():
+    db = SessionLocal()
     try:
-        yield connection, cursor
+        yield db
     finally:
-        cursor.close()
-        connection.close()
+        db.close()

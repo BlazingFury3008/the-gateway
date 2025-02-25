@@ -1,12 +1,15 @@
 import axios from "axios";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY
 
 // Create Axios instance
 const api = axios.create({
   baseURL: BACKEND_URL,
   headers: {
     "Content-Type": "application/json",
+    "X-API-KEY":API_KEY,
+
   },
   withCredentials: true, // Ensures cookies/session handling
 });

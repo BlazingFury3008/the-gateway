@@ -1,27 +1,21 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from pydantic import BaseModel, create_model, EmailStr
+from database import metadata
 
-# Schema for creating a user
-class UserCreate(BaseModel):
-    name: str
-    email: EmailStr
-    password: str
+# Dictionary to store dynamically generated Pydantic models
+schemas = {}
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+for table_name, table in metadata.tables.items():
+    fields = {}
+    for column in table.columns:
+        field_type = str  # Default to string
+        if column.type.python_type == int:
+            field_type = int
+        elif column.type.python_type == float:
+            field_type = float
+        elif column.type.python_type == bool:
+            field_type = bool
 
-# Schema for user response
-class UserResponse(BaseModel):
-    uuid: str
-    name: str
-    email: EmailStr
+        fields[column.name] = (field_type, ...)
 
-    class Config:
-        orm_mode = True  # Allows SQLAlchemy models to be returned as JSON
-
-# Response Model for Authentication Tokens
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-    user: Optional[dict] = None
+    # Create Pydantic model dynamically
+    schemas[table_name] = create_model(f"{table_name.capitalize()}Schema", **fields)

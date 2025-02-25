@@ -37,30 +37,30 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // API call to login
-      const res = await api.post("/login", { email, password });
+        // API call to login with credentials
+        const res = await api.post("/login", { email, password });
 
-      console.log("Login Response:", res);
+        // Store JWT token
+        localStorage.setItem("access_token", res.data.access_token);
 
-      localStorage.setItem("access_token", res.data.access_token);
+        // Authenticate with NextAuth
+        const loginRes = await signIn("credentials", { email, password, redirect: false });
 
-      // Authenticate with NextAuth
-      const loginRes = await signIn("credentials", { email, password, redirect: false });
+        console.log("SignIn Response:", loginRes);
 
-      console.log("SignIn Response:", loginRes);
-
-      if (loginRes?.error) {
-        setError("Invalid email or password.");
-      } else {
-        router.push("/dashboard"); // Redirect after login
-      }
+        if (loginRes?.error) {
+            setError("Invalid email or password.");
+        } else {
+            router.push("/dashboard"); // Redirect after login
+        }
     } catch (error: any) {
-      console.error("Login Error:", error);
-      setError(error.response?.data?.detail || "An error occurred.");
+        console.error("Login Error:", error);
+        setError(error.response?.data?.detail || "An error occurred.");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)] text-[var(--color-foreground)] transition-colors duration-300">
