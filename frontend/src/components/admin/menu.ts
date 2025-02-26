@@ -21,6 +21,11 @@ export const menu: MenuOption[] = [
         href: "/users",
         headerLevel: "H1",
       },
+      {
+        name: "Admin Logs",
+        href: "/admin-logs",
+        headerLevel: "H1"
+      }
   ];
 
 export const excludedTables = [
