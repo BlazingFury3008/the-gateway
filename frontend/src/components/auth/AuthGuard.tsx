@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AuthGuard({ children, requiredAuthLevel }: { children: React.ReactNode; requiredAuthLevel: number | null }) {
+export default function AuthGuard({requiredAuthLevel }: {requiredAuthLevel: number | null }) {
   const { status, data: session } = useSession();
   const router = useRouter();
 
@@ -21,11 +21,9 @@ export default function AuthGuard({ children, requiredAuthLevel }: { children: R
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-      </div>
+<div></div>
     );
   }
 
-  return <>{children}</>;
+  return null;
 }

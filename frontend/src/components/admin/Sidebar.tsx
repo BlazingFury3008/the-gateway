@@ -2,8 +2,6 @@ import Link from "next/link";
 import React from "react";
 import { menu, MenuOption } from "./menu";
 
-
-
 function SidebarSelection({ name, href, options, headerLevel }: MenuOption) {
   const padding = (() => {
     switch (headerLevel) {
@@ -25,7 +23,7 @@ function SidebarSelection({ name, href, options, headerLevel }: MenuOption) {
       <Link href={`/admin${href}`} className={`hover:underline ${padding}`}>
         {name}
       </Link>
-      {options?.map((x : MenuOption) => (
+      {options?.map((x: MenuOption) => (
         <SidebarSelection {...x} key={x.href} />
       ))}
     </div>
@@ -39,23 +37,33 @@ export default function Sidebar({
 }) {
   return (
     <div className="p-2">
-      <h1 className="text-2xl">Admin</h1>
-      {menu.map((menuItem) => (
-        <SidebarSelection {...menuItem} key={menuItem.href} />
-      ))}
-      <SidebarSelection
-        name={"Databases"}
-        href={"/database"}
-        headerLevel={"H1"}
-      />
-      {databaseTables.map((database, key) => (
+      <div className="h-11/12">
+        {" "}
+        <h1 className="text-2xl">Admin</h1>
+        {menu.map((menuItem) => (
+          <SidebarSelection {...menuItem} key={menuItem.href} />
+        ))}
         <SidebarSelection
-        key={key}
-          name={database}
-          href={"/database?table=" + database}
-          headerLevel={"H2"}
+          name={"Databases"}
+          href={"/database"}
+          headerLevel={"H1"}
         />
-      ))}
+        {databaseTables.map((database, key) => (
+          <SidebarSelection
+            key={key}
+            name={database}
+            href={"/database?table=" + database}
+            headerLevel={"H2"}
+          />
+        ))}
+      </div>
+      <div>
+      <div>
+      <Link href={`/profile`} className={`hover:underline`}>
+        Go Back
+      </Link>
+    </div>
+      </div>
     </div>
   );
 }

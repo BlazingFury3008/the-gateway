@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import AuthGuard from "@/components/auth/AuthGuard";
 import "../../globals.css";
@@ -16,7 +16,9 @@ export default function AdminLayout({
     const fetchTables = async () => {
       try {
         const res = await api.get("/tables");
-        setTables(res.data.tables.filter((t : string) => !excludedTables.includes(t)));
+        setTables(
+          res.data.tables.filter((t: string) => !excludedTables.includes(t))
+        );
       } catch (error) {
         console.error("Error fetching tables:", error);
       }
@@ -26,18 +28,18 @@ export default function AdminLayout({
   }, []); // Dependency array ensures it runs once on mount
 
   return (
-    <AuthGuard requiredAuthLevel={6}>
-      <div className="min-h-screen bg-[var(--color-background-soft)] flex mt-2">
-        {/* Sidebar - Ensure it has height */}
-        <div className="min-w-56 max-w-56 min-h-screen bg-[var(--color-background)]">
-          <Sidebar databaseTables={tables || []} />
-        </div>
-
-        {/* Main content with a background to make it visible */}
-        <div className="flex-1 min-h-screen bg-[var(--color-background-soft)]">
-          {children}
-        </div>
+    <div className="min-h-screen bg-[var(--color-background-soft)] flex mt-2">
+      {/* Sidebar - Ensure it has height */}
+      <div className="min-w-56 max-w-56 min-h-screen bg-[var(--color-background)]">
+        <Sidebar databaseTables={tables || []} />
       </div>
-    </AuthGuard>
+
+      {/* Main content with a background to make it visible */}
+      <div className="flex-1 min-h-screen bg-[var(--color-background-soft)]">
+      <AuthGuard requiredAuthLevel={6} />
+
+        {children}
+      </div>
+    </div>
   );
 }

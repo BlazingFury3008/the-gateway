@@ -17,19 +17,19 @@ def create_table_routes(table_name: str, table):
     """
     ModelSchema = schemas.get(table_name)
     if not ModelSchema:
-        print(f"⚠️ Warning: No schema found for table '{table_name}', skipping...")
+        print(f"Warning: No schema found for table '{table_name}', skipping...")
         return
 
     primary_keys = table.primary_key.columns.keys()
     if not primary_keys:
-        print(f"⚠️ Warning: Table '{table_name}' has no primary key. Skipping...")
+        print(f"Warning: Table '{table_name}' has no primary key. Skipping...")
         return
 
     primary_key = primary_keys[0]  # Use the first primary key
 
     # Get table comment to use as a tag
     table_tag = table.comment if table.comment else "General"
-    print(f"📌 Registering table: {table_name} | Tag: {table_tag}")
+    print(f"Registering table: {table_name} | Tag: {table_tag}")
 
     @router.post(f"/data/{table_name}/", response_model=ModelSchema, dependencies=[Depends(validate_api_key)], tags=[table_tag])
     async def create_entry(data: ModelSchema, db: Session = Depends(get_db)):
@@ -86,4 +86,4 @@ for table_name, table in metadata.tables.items():
         continue
     create_table_routes(table_name, table)
 
-print("✅ API routes generated dynamically with tags from table comments.")
+print("API routes generated dynamically with tags from table comments.")

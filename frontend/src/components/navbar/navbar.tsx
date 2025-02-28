@@ -22,6 +22,16 @@ export default function Navbar() {
     await update();
   };
 
+  const [user, setUser] = useState(session?.user)
+
+  useEffect(() => {
+    if(status ==="authenticated")
+    {
+      setUser(session.user)
+    }
+
+  }, [session])
+
   // Close dropdown if clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -56,9 +66,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-4 sm:space-x-6">
             {/* User Section - Stacks on Mobile */}
             <div className="relative flex items-center space-x-3 sm:space-x-4" ref={dropdownRef}>
-              {status === "loading" ? (
-                <div className="w-24 h-10 bg-gray-300 dark:bg-gray-700 animate-pulse rounded-lg"></div>
-              ) : session?.user ? (
+              {user && status != "unauthenticated" ? (
                 <>
                   {/* User Button */}
                   <button
@@ -66,14 +74,14 @@ export default function Navbar() {
                     className="flex items-center space-x-2 focus:outline-none"
                   >
                     <Image
-                      src={session.user.image || DEFAULT_AVATAR}
+                      src={user.image || DEFAULT_AVATAR}
                       alt="User Avatar"
                       className="w-10 h-10 rounded-full border border-gray-400 dark:border-gray-600"
                       width={40}
                       height={40}
                     />
                     <span className="hidden sm:block text-sm font-medium">
-                      {session.user.name || "User"}
+                      {user.name || "User"}
                     </span>
                   </button>
 
@@ -81,7 +89,7 @@ export default function Navbar() {
                   {dropdownOpen && (
                     <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--color-background)] border border-[var(--color-border)] shadow-lg rounded-lg p-2 z-50 transition-opacity duration-300">
                       <p className="px-4 py-2 text-sm text-[var(--color-foreground)]">
-                        {session.user.name}
+                        {user.name}
                       </p>
                       <Link href="/profile"  onClick={() => setDropdownOpen(false)}>
                         <p className="px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer transition">
