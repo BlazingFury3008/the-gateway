@@ -7,7 +7,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:800
 
 async function refreshAccessToken(token: any) {
   try {
-    console.log("Attempting to refresh access token...");
+    console.log("🔄 Refreshing access token...");
 
     const res = await axios.post(`${BACKEND_URL}/refresh-token`, {
       accessToken: token.accessToken,
@@ -19,7 +19,7 @@ async function refreshAccessToken(token: any) {
 
     const decodedToken = jwtDecode<{ exp: number }>(res.data.access_token);
 
-    console.log("✅ New access token received, updating session...");
+    console.log("✅ New access token received.");
 
     return {
       ...token,
@@ -27,10 +27,12 @@ async function refreshAccessToken(token: any) {
       expiresAt: decodedToken.exp * 1000, // Convert expiration to milliseconds
     };
   } catch (error) {
-    console.error("❌ Failed to refresh access token:", error);
+    console.error("❌ Token refresh failed:", error);
 
-    // Return the same token instead of invalidating it
-    return token; 
+    return {
+      ...token,
+      error: "RefreshTokenError", // Flag that refresh failed
+    };
   }
 }
 
@@ -67,7 +69,7 @@ export const authOptions: NextAuthOptions = {
           }
           return null;
         } catch (error: any) {
-          console.error("Login error:", error.response?.data || error.message);
+          console.error("❌ Login error:", error.response?.data || error.message);
           throw new Error(error.response?.data?.detail || "Invalid credentials");
         }
       },
@@ -77,31 +79,44 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.name = user.name;
-        token.email = user.email;
-        token.auth = user.auth;
-        token.accessToken = user.accessToken;
-        token.expiresAt = user.expiresAt;
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          auth: user.auth,
+          accessToken: user.accessToken,
+          expiresAt: user.expiresAt,
+        };
       }
 
-      // Refresh token if page changes (trigger === "update")
-      if (trigger === "update" && Date.now() < token.expiresAt - 5 * 60 * 1000) {
+      // Ensure expiresAt is always defined
+      if (!token.expiresAt) {
+        console.warn("⚠️ Token missing expiration, logging out...");
+        return {} as any;
+      }
+
+      // Refresh token if it's close to expiring (5 minutes threshold)
+      const shouldRefresh = Date.now() > token.expiresAt - 5 * 60 * 1000;
+
+      if (shouldRefresh) {
         return await refreshAccessToken(token);
       }
 
-      // If token is expired, invalidate session
+      // If token is expired, clear session
       if (Date.now() > token.expiresAt) {
-        console.warn("JWT expired, logging out...");
+        console.warn("⏳ JWT expired, logging out...");
         return {} as any;
       }
 
       return token;
     },
     async session({ session, token }) {
-      if (!token.accessToken) return null; // Expired session
+      if (!token.accessToken || token.error === "RefreshTokenError") {
+        console.warn("❌ Session expired or refresh failed.");
+        return null;
+      }
 
       session.user = {
         id: token.id,

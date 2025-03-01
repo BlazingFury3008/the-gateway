@@ -17,7 +17,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// ✅ Define metadata in the Server Component
 export const metadata: Metadata = {
   title: "The Gateway",
   description: "A platform for creating, managing, and exploring TTRPGs and games.",
