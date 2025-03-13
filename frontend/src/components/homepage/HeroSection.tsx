@@ -55,6 +55,13 @@ export default function HeroSection() {
     }
   }, [currentIndex]);
 
+  const handleScroll = () => {
+    const section = document.getElementById("discover");
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <section className="relative min-h-[600px] md:min-h-[900px] w-full overflow-hidden flex items-center justify-center bg-[var(--color-background-soft)] transition-colors duration-300">
       {/* Infinite Scrolling Image Slider */}
@@ -107,12 +114,12 @@ export default function HeroSection() {
           Whether you’re exploring new worlds or crafting your own, you’re in
           the right place.
         </p>
-        <a
-          href="#discover"
-          className="mt-8 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-background)] px-8 py-4 rounded-full text-xl font-semibold shadow-lg transition"
+        <button
+        onClick={handleScroll}
+        className="mt-8 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-background)] px-8 py-4 rounded-full text-xl font-semibold shadow-lg transition"
         >
           Explore Now
-        </a>
+        </button>
       </div>
     </section>
   );

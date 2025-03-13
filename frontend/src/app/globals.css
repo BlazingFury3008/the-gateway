@@ -43,6 +43,17 @@
   --color-foreground-soft: #a0a7b8; /* Better contrast */
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 /* Global Styling */
 body {
   @apply bg-[var(--color-background)] text-[var(--color-foreground)] font-sans antialiased transition-colors duration-300;

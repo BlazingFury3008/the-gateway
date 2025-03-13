@@ -5,6 +5,15 @@ import Link from "next/link";
 import Image from "next/image";
 import api from "@/other/axios";
 import { vtm5_getClanSymbol } from "@/app/helper";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import {
+  character_creation_modes,
+  characterCreationOptions,
+  optionalRulesSelection,
+} from "@/data/vtm5_characterCreation";
+import { X } from "lucide-react";
 
 interface Character {
   id: string;
@@ -19,6 +28,20 @@ interface Character {
 export default function Page() {
   const { data: session } = useSession();
   const [characters, setCharacters] = useState<Character[]>([]);
+  const [displayModal, setDisplayModal] = useState<boolean>(false);
+  const [selectedOption, setSelectedOption] = useState<{
+    label: string;
+    href: string;
+  } | null>();
+  const [optionalRules, setOptionalRules] = useState<
+    { label: string; href: string }[]
+  >([]);
+
+
+  const baseUrl = "/character-creation/vtm5/new-character?mode=";
+  const queryParams = `${selectedOption?.href || ""}&&${
+    optionalRules.length ? `optional_rules=${optionalRules.map((rule) => rule.href).join("+")}` : ""
+  }`;
 
   useEffect(() => {
     async function fetchCharacters() {
@@ -50,12 +73,12 @@ export default function Page() {
       </div>
       {/* Create Character Button */}
       <div className="mt-6 flex justify-center">
-        <Link
-          href="/character-creation/vtm5/new-character"
+        <button
+          onClick={() => setDisplayModal(true)}
           className="px-8 py-4 text-lg font-semibold tracking-wide bg-gradient-to-r from-red-600 to-black text-white rounded-xl shadow-lg transform hover:scale-105 transition duration-300"
         >
-          + Create a New Character
-        </Link>
+          + Create a Character
+        </button>
       </div>
       {/* Character Cards Grid */}
       <h2 className="text-center text-lg mt-3">My Characters</h2>
@@ -76,11 +99,129 @@ export default function Page() {
           </p>
         </div>
       )}
+      <div
+        className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity backdrop-blur-sm ${
+          !displayModal ? "hidden" : "opacity-100"
+        }`}
+      >
+        <div className="bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg shadow-lg p-6 w-[600] flex flex-col items-center space-y-4">
+          <div className="flex justify-between w-full">
+            <h1>Select Option:</h1>
+            <div>
+            <button onClick={() => setDisplayModal(false)}>
+              <X />
+            </button>
+            </div>
+
+          </div>
+          {character_creation_modes.map((mode, index) => (
+            <Link
+              key={index}
+              className="w-full text-center px-4 py-2 text-lg font-semibold tracking-wide bg-gradient-to-r from-red-600 to-black text-white rounded-xl shadow-lg transform hover:scale-105 transition duration-300"
+              href={`${baseUrl}${mode}${queryParams}`}
+            >
+              {mode === "custom"
+                ? "No Restrictions"
+                : mode.charAt(0).toUpperCase() + mode.slice(1)}
+            </Link>
+          ))}
+
+          <Accordion
+            className="border border-[var(--color-border)] rounded-lg shadow-md transition-all w-full"
+            sx={{
+              backgroundColor: "var(--color-background)",
+              color: "var(--color-foreground)",
+            }}
+          >
+            {/* Accordion Header */}
+            <AccordionSummary className="px-4 py-3 font-semibold hover:bg-[var(--color-border-light)] transition w-full">
+              Extra Options
+            </AccordionSummary>
+
+            {/* Accordion Content */}
+            <AccordionDetails className="px-4 py-3 bg-[var(--color-background-soft)] text-[var(--color-foreground-muted)] transition-all">
+              {characterCreationOptions.map((option, key: number) => (
+                <div
+                  key={key}
+                  onClick={() => {
+                    if (selectedOption?.label == option.label) {
+                      setSelectedOption(null);
+                    } else {
+                      setSelectedOption(option);
+                    }
+                  }}
+                  className="w-full cursor-pointer mb-1"
+                >
+                  <input
+                    type="checkbox"
+                    name=""
+                    id=""
+                    className="mr-2"
+                    checked={selectedOption?.label == option.label}
+                    readOnly
+                  />
+                  {option.label}
+                </div>
+              ))}
+            </AccordionDetails>
+          </Accordion>
+          <Accordion
+            className="border border-[var(--color-border)] rounded-lg shadow-md transition-all w-full"
+            sx={{
+              backgroundColor: "var(--color-background)",
+              color: "var(--color-foreground)",
+            }}
+          >
+            {/* Accordion Header */}
+            <AccordionSummary className="px-4 py-3 font-semibold hover:bg-[var(--color-border-light)] transition w-full">
+              Optional Rules
+            </AccordionSummary>
+
+            {/* Accordion Content */}
+            <AccordionDetails className="px-4 py-3 bg-[var(--color-background-soft)] text-[var(--color-foreground-muted)] transition-all">
+              {optionalRulesSelection.map((option, key: number) => (
+                <div
+                  key={key}
+                  onClick={() => {
+                    if (optionalRules.includes(option)) {
+                      setOptionalRules(
+                        optionalRules.filter(
+                          (rule: { label: string; href: string }) =>
+                            rule.href != option.href
+                        )
+                      );
+                    } else {
+                      setOptionalRules([...optionalRules, option]);
+                    }
+                  }}
+                  className="w-full cursor-pointer mb-1"
+                >
+                  <input
+                    type="checkbox"
+                    name=""
+                    id=""
+                    className="mr-2"
+                    checked={optionalRules.includes(option)}
+                    readOnly
+                  />
+                  {option.label}
+                </div>
+              ))}
+            </AccordionDetails>
+          </Accordion>
+        </div>
+      </div>
     </div>
   );
 }
 
-function CharacterCard({ char, onClick }: { char: Character; onClick: () => void }) {
+function CharacterCard({
+  char,
+  onClick,
+}: {
+  char: Character;
+  onClick: () => void;
+}) {
   return (
     <div
       key={char.id}
@@ -108,7 +249,8 @@ function CharacterCard({ char, onClick }: { char: Character; onClick: () => void
           <strong>Generation:</strong> {char.generation}th
         </p>
         <p className="text-gray-400 text-sm">
-          <strong>Created:</strong> {new Date(char.creationDate).toLocaleDateString()}
+          <strong>Created:</strong>{" "}
+          {new Date(char.creationDate).toLocaleDateString()}
         </p>
         <div className="mt-4 flex justify-between items-center text-sm">
           <span className="text-green-400">

@@ -17,3 +17,4 @@ class User(Base):
     username = Column(String(255), unique=False, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     auth_level = Column(Integer, default=1)
+    config = Column(String)

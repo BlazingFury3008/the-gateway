@@ -5,7 +5,6 @@ import Footer from "@/components/Footer";
 import Navbar from "@/components/navbar/navbar";
 import SessionProviderWrapper from "@/components/components/SessionProviderWrapper";
 import ThemeProvider from "@/components/ThemeProvider";
-import TokenValidator from "@/components/auth/TokenValidator";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,8 +18,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "The Gateway",
-  description: "A platform for creating, managing, and exploring TTRPGs and games.",
-  keywords: ["TTRPG", "Game Development", "Character Manager", "Worldbuilding", "Next.js", "React"],
+  description:
+    "A platform for creating, managing, and exploring TTRPGs and games.",
+  keywords: [
+    "TTRPG",
+    "Game Development",
+    "Character Manager",
+    "Worldbuilding",
+    "Next.js",
+    "React",
+  ],
 };
 
 export default function RootLayout({
@@ -28,15 +35,15 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-[family-name:var(--font-geist-mono)]  bg-black select-none`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased font-[family-name:var(--font-geist-mono)]  bg-black select-none`}
+      >
         <SessionProviderWrapper>
           <ThemeProvider>
-            <TokenValidator />
-             <Navbar />
-          <div className="">{children}</div>
-          <Footer />
+            <Navbar />
+            <div className="">{children}</div>
+            <Footer />
           </ThemeProvider>
-         
         </SessionProviderWrapper>
       </body>
     </html>

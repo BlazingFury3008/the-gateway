@@ -6,6 +6,11 @@ import { jwtDecode } from "jwt-decode";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 async function refreshAccessToken(token: any) {
+  if (!token.accessToken) {
+    console.warn("⚠️ No access token found, skipping refresh.");
+    return { ...token, error: "NoTokenError" };
+  }
+
   try {
     console.log("🔄 Refreshing access token...");
 
@@ -59,10 +64,11 @@ export const authOptions: NextAuthOptions = {
             const decodedToken = jwtDecode<{ exp: number }>(res.data.access_token);
 
             return {
-              id: res.data.user.uuid || res.data.user.id,
+              uuid: res.data.user.uuid || res.data.user.id,
               name: res.data.user.name,
               email: res.data.user.email,
               auth: res.data.user.auth,
+              config: res.data.user.config,
               accessToken: res.data.access_token,
               expiresAt: decodedToken.exp * 1000, // Convert to milliseconds
             };
@@ -82,53 +88,56 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         return {
-          id: user.id,
+          id: user.uuid,
           name: user.name,
           email: user.email,
           auth: user.auth,
+          config: user.config,
           accessToken: user.accessToken,
           expiresAt: user.expiresAt,
         };
       }
 
-      // Ensure expiresAt is always defined
+      // Ensure the token has an expiration date before proceeding
       if (!token.expiresAt) {
-        console.warn("⚠️ Token missing expiration, logging out...");
+        console.warn("⚠️ Token missing expiration, returning empty token.");
         return {} as any;
       }
 
-      // Refresh token if it's close to expiring (5 minutes threshold)
-      const shouldRefresh = Date.now() > token.expiresAt - 5 * 60 * 1000;
+      // Ensure token always includes config
+      if (!token.config) {
+        console.warn("⚠️ Token is missing config, restoring...");
+      }
 
+      // Refresh token if close to expiring (5 minutes threshold)
+      const shouldRefresh = Date.now() > token.expiresAt - 5 * 60 * 1000;
       if (shouldRefresh) {
         return await refreshAccessToken(token);
       }
 
-      // If token is expired, clear session
-      if (Date.now() > token.expiresAt) {
-        console.warn("⏳ JWT expired, logging out...");
-        return {} as any;
-      }
-
       return token;
     },
+
     async session({ session, token }) {
-      if (!token.accessToken || token.error === "RefreshTokenError") {
-        console.warn("❌ Session expired or refresh failed.");
-        return null;
+      if (!token?.accessToken || token?.error) {
+        console.warn("Session expired or user not logged in, returning empty session.");
+        return {}; // Prevent breaking the UI
       }
-
-      session.user = {
-        id: token.id,
-        name: token.name,
-        email: token.email,
-        auth: token.auth,
+  
+      return {
+        ...session,
+        user: {
+          id: token.id,
+          name: token.name,
+          email: token.email,
+          auth: token.auth,
+          config: token.config || "DefaultConfig",
+        },
+        accessToken: token.accessToken,
+        expires: new Date(token.expiresAt).toISOString(),
       };
-      session.accessToken = token.accessToken;
-      session.expires = new Date(token.expiresAt).toISOString(); // Convert to ISO string
-
-      return session;
-    },
+    }
+    
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: true,

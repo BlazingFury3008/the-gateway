@@ -10,27 +10,27 @@ import Image from "next/image";
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
 export default function Navbar() {
-  const { data: session, status, update } = useSession();
+  const { data: session, status } = useSession();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Store user state but default to null to prevent errors
+  const [user, setUser] = useState(session?.user || null);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      setUser(session.user);
+    } else {
+      setUser(null); // Explicitly reset user state if logged out
+    }
+  }, [session, status]);
 
   const handleLogout = async () => {
     setDropdownOpen(false);
     await signOut({ redirect: false });
     router.replace("/");
-    await update();
   };
-
-  const [user, setUser] = useState(session?.user)
-
-  useEffect(() => {
-    if(status ==="authenticated")
-    {
-      setUser(session.user)
-    }
-
-  }, [session])
 
   // Close dropdown if clicking outside
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-4 sm:space-x-6">
             {/* User Section - Stacks on Mobile */}
             <div className="relative flex items-center space-x-3 sm:space-x-4" ref={dropdownRef}>
-              {user && status != "unauthenticated" ? (
+              {user ? (
                 <>
                   {/* User Button */}
                   <button

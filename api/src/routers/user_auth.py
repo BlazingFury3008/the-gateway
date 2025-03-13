@@ -23,27 +23,25 @@ class SignupRequest(BaseModel):
 
 @router.post("/login")
 async def login(request: LoginRequest, db: Session = Depends(get_db)):
-    try:
-        user = db.query(User).filter(User.email == request.email).first()
-        if not user or not verify_password(request.password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user or not verify_password(request.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-        # Generate JWT token
-        token = create_jwt_token({"sub": user.uuid})
+    # Generate JWT token
+    token = create_jwt_token({"sub": user.uuid})
 
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "user": {
-                "id": user.uuid,
-                "name": user.username,
-                "email": user.email,
-                "auth": user.auth_level,
-            },
-        }
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "uuid": user.uuid,
+            "name": user.username,
+            "email": user.email,
+            "auth": user.auth_level,
+            "config": user.config
+        },
+    }
 
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @router.post("/signup")
 async def signup(request: SignupRequest, db: Session = Depends(get_db)):
@@ -79,6 +77,7 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
 async def refresh_token(request: Request, db: Session = Depends(get_db)):
     """Refresh the access token if it's still valid."""
     try:
+        print(request)
         body = await request.json()
         old_token = body.get("accessToken")
 
