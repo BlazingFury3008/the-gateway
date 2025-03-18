@@ -107,3 +107,13 @@ export interface DisciplineJunction {
   clanID: number;
   disciplineID: number;
 }
+
+export interface DisciplinePower {
+  ID: number;
+  Name: string;
+  Description: string;
+  Reference: string;
+  Level: number;
+  Prerequisite: string;
+  DisciplineGroup: number;
+}

@@ -30,7 +30,7 @@ def validate_api_key(api_key: str = Security(API_KEY_HEADER), db: Session = Depe
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 # Function to create JWT token
-def create_jwt_token(data: dict, expires_delta: int = 60):
+def create_jwt_token(data: dict, expires_delta: int = 60*48):
     to_encode = data.copy()
     expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=expires_delta)
     to_encode.update({"exp": expire})

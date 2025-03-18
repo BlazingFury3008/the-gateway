@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo, Component, ReactElement } from "react";
+import { useEffect, useState, useMemo, ReactElement } from "react";
 import { useSearchParams } from "next/navigation";
 
 import ClanSelection from "@/components/character-creation/vtm5/ClanSelection";
@@ -15,11 +15,13 @@ import {
   DisciplineJunction,
   defaultAttributes,
   defaultSkills,
+  DisciplinePower,
 } from "@/data/vtm5_characterCreation";
 import api from "@/lib/axios";
 import Attributes from "@/components/character-creation/vtm5/Attributes";
 import Skills from "@/components/character-creation/vtm5/Skills";
 import Specialities from "@/components/character-creation/vtm5/Specialities";
+import Disciplines from "@/components/character-creation/vtm5/Disciplines";
 
 export default function CharacterCreationPage() {
   //Selected Data
@@ -39,6 +41,24 @@ export default function CharacterCreationPage() {
   const [selectedSkills, setSelectedSkills] = useState<
     { skill: string; value: number }[]
   >([...defaultSkills]);
+  const [specialities, setSpecialities] = useState<{
+    craft: string;
+    science: string;
+    performance: string;
+    academics: string;
+    dropdownSkill: string;
+    dropdownSpec: string;
+  }>({
+    craft: "",
+    science: "",
+    performance: "",
+    academics: "",
+    dropdownSkill: "",
+    dropdownSpec: "",
+  });
+  const [selectedDisciplinePowers, setSelectedDisciplinePowers] = useState<DisciplinePower[]>(
+    []
+  );
 
   //Page Logic
   const [page, setPage] = useState<number>(0);
@@ -70,8 +90,21 @@ export default function CharacterCreationPage() {
   const [thinbloodFlaws, setThinbloodFlaws] = useState<ThinbloodBackground[]>(
     []
   );
+  const [disciplinePowers, setDisciplinePowers] = useState<DisciplinePower[]>(
+    []
+  );
+  const [extraDisciplinePowers, setExtraDisciplinePowers] = useState();
+  const [extraDisciplineGroups, setExtraDisciplineGroups] = useState();
+  const [merits, setMerits] = useState();
+  const [flaws, setFlaws] = useState();
+  const [havenMerits, setHavenMerits] = useState();
+  const [havenFlaws, setHavenFlaws] = useState();
+  const [predatorTypes, setPredatorTypes] = useState();
 
   const attributeLayout = [4, 3, 3, 3, 2, 2, 2, 2, 1];
+  const specialised = [4, 3, 3, 3, 2, 2, 2, 1, 1, 1];
+  const balanced = [3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1];
+  const jackofall = [3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 
   //Loading
   const [loading, setLoading] = useState(true);
@@ -89,6 +122,14 @@ export default function CharacterCreationPage() {
           caitiffFlawsRes,
           thinbloodMeritsRes,
           thinbloodFlawsRes,
+          disciplinePowersRes,
+          extraDisciplineGroupsRes,
+          extraDisciplinePowersRes,
+          meritsRes,
+          flawsRes,
+          havenMeritsRes,
+          havenFlawsRes,
+          predatorTypeRes,
         ] = await Promise.all([
           api.get("/data/vtm5_clan/"),
           api.get("/data/vtm5_clandisciplinejunction/"),
@@ -97,6 +138,14 @@ export default function CharacterCreationPage() {
           api.get("/data/vtm5_caitiffflaws/"),
           api.get("/data/vtm5_thinbloodmerits/"),
           api.get("/data/vtm5_thinbloodflaws/"),
+          api.get("/data/vtm5_disciplinepowers/"),
+          api.get("/data/vtm5_extradisciplinegroups/"),
+          api.get("/data/vtm5_extradisciplinepowers/"),
+          api.get("/data/vtm5_merits/"),
+          api.get("/data/vtm5_flaws/"),
+          api.get("/data/vtm5_havenmerits/"),
+          api.get("/data/vtm5_havenflaws/"),
+          api.get("/data/vtm5_predatortype/"),
         ]);
 
         // Store fetched data
@@ -107,6 +156,14 @@ export default function CharacterCreationPage() {
         setCaitiffFlaws(caitiffFlawsRes.data);
         setThinbloodMerits(thinbloodMeritsRes.data);
         setThinbloodFlaws(thinbloodFlawsRes.data);
+        setDisciplinePowers(disciplinePowersRes.data);
+        setExtraDisciplineGroups(extraDisciplineGroupsRes.data);
+        setExtraDisciplinePowers(extraDisciplinePowersRes.data);
+        setMerits(meritsRes.data);
+        setFlaws(flawsRes.data);
+        setHavenMerits(havenMeritsRes.data);
+        setHavenFlaws(havenFlawsRes.data);
+        setPredatorTypes(predatorTypeRes.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -224,16 +281,42 @@ export default function CharacterCreationPage() {
         <Attributes
           attributes={selectedAttributes}
           setAttributes={setSelectedAttributes}
+          attributeLayout={attributeLayout}
         />
       ),
-      check: true,
+      check: !true,
     },
     {
-      component: <Skills />,
-      check: true,
+      component: (
+        <Skills
+          skills={selectedSkills}
+          setSkills={setSelectedSkills}
+          skillsLayout={[specialised, balanced, jackofall]}
+        />
+      ),
+      check: !true,
     },
     {
-      component: <Specialities />,
+      component: (
+        <Specialities
+          skills={selectedSkills}
+          specialities={specialities}
+          setSpecialities={setSpecialities}
+        />
+      ),
+      check: selectedSkills.filter((val) => val.value > 0).length > 0,
+    },
+    {
+      component: (
+        <Disciplines
+          selectedClan={selectedClan}
+          disciplineJunction={disciplineJunction}
+          disciplinePowers={disciplinePowers}
+          disciplineGroups={disciplines}
+          selectedDisciplines={selectedDisciplinePowers}
+          setSelectedDisciplines={setSelectedDisciplinePowers}
+        />
+      ),
       check: true,
     },
   ];
@@ -242,6 +325,7 @@ export default function CharacterCreationPage() {
     for (let index = 1; index < allPages.length; index++) {
       if (allPages[page - index].check) {
         setPage(page - index);
+        window.scrollTo({ top: 0, behavior: "smooth" }); // Scrolls to top smoothly
         return;
       }
     }
@@ -251,6 +335,7 @@ export default function CharacterCreationPage() {
     for (let index = 1; index < allPages.length - page; index++) {
       if (allPages[page + index].check) {
         setPage(page + index);
+        window.scrollTo({ top: 0, behavior: "smooth" }); // Scrolls to top smoothly
         return;
       }
     }
@@ -267,18 +352,80 @@ export default function CharacterCreationPage() {
     if (page === 3) {
       return selectedBane == "";
     }
+    if (page == 4) {
+      return (
+        JSON.stringify(selectedAttributes.map((val) => val.value).sort()) !==
+        JSON.stringify([...attributeLayout].sort())
+      );
+    }
+    if (page == 5) {
+      return !(
+        JSON.stringify(
+          selectedSkills
+            .map((val) => val.value)
+            .filter((val) => val != 0)
+            .sort()
+        ) === JSON.stringify([...specialised].sort()) ||
+        JSON.stringify(
+          selectedSkills
+            .map((val) => val.value)
+            .filter((val) => val != 0)
+            .sort()
+        ) === JSON.stringify([...balanced].sort()) ||
+        JSON.stringify(
+          selectedSkills
+            .map((val) => val.value)
+            .filter((val) => val != 0)
+            .sort()
+        ) === JSON.stringify([...jackofall].sort())
+      );
+    }
+    if (page === 6) {
+      const getSkillValue = (skillName: string) => {
+        const skill = selectedSkills.find((val) => val.skill === skillName);
+        return skill ? skill.value : 0; // Default to 0 if skill is not found to avoid errors
+      };
+
+      const academics =
+        getSkillValue("Academics") == 0 || specialities.academics !== "";
+      const science =
+        getSkillValue("Science") == 0 || specialities.science !== "";
+      const performance =
+        getSkillValue("Performance") == 0 || specialities.performance !== "";
+      const craft = getSkillValue("Craft") == 0 || specialities.craft !== "";
+      const dropdownSpec = specialities.dropdownSpec !== "";
+      const dropdownSkill = specialities.dropdownSkill !== "";
+
+      return !(
+        academics &&
+        science &&
+        performance &&
+        craft &&
+        dropdownSpec &&
+        dropdownSkill
+      );
+    }
 
     return false;
-  }, [page, selectedClan, meritPoints, thinbloodAdv]);
+  }, [
+    page,
+    selectedClan,
+    meritPoints,
+    thinbloodAdv,
+    selectedAttributes,
+    attributeLayout,
+    selectedSkills,
+    specialities,
+  ]);
 
   return (
-    <div className="mx-auto p-6">
+    <div className="mx-auto py-6 px-2 sm:px-6">
       <h1 className="sm:text-3xl text-xl font-bold text-center">
         Character Creation
       </h1>
 
       {/* Page transition container */}
-      <div className="relative w-full sm:h-[700px] overflow-scroll">
+      <div className="relative w-full sm:h-[700px] overflow-scroll sm:overflow-hidden">
         <div
           key={page}
           className="relative w-full transition-all duration-500 ease-in-out opacity-100 translate-y-0 min-h-[62vh] overflow-scroll"

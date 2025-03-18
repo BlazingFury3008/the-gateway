@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import ClanModal from "./ClanModal";
 import { vtm5_getClanSymbol } from "@/app/helper";
@@ -28,6 +28,7 @@ export default function ClanSelection({
   const [selectedClan, setSelectedClan] = useState<Clan | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const clanRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -41,6 +42,17 @@ export default function ClanSelection({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    // Auto-scroll to selected clan in the carousel
+    if (clanSelect !== null && clanRefs.current[clanSelect]) {
+      clanRefs.current[clanSelect]?.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  }, [clanSelect]);
+
   function handleMoreInfo(clan: Clan) {
     setSelectedClan(clan);
     setShowModal(true);
@@ -48,15 +60,32 @@ export default function ClanSelection({
 
   return (
     <div className="container mx-auto px-4">
-      <h2 className="text-lg sm:text-xl font-bold text-center mb-4 overflow-scroll">
+      <h2 className="text-lg sm:text-xl font-bold text-center mb-4">
         Select Your Clan
       </h2>
 
-      {/* Mobile Layout */}
-      <div className="sm:hidden flex space-x-4 overflow-x-auto p-4 scrollbar-hide snap-x snap-mandatory no-scrollbar h-96 ">
+      {/* Mobile Dropdown */}
+      <div className="sm:hidden mb-4 px-4">
+        <select
+          className="w-full p-2 border rounded-md bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
+          value={clanSelect || ""}
+          onChange={(e) => onClanSelect(Number(e.target.value))}
+        >
+          <option value="">Select a Clan...</option>
+          {clans.map((clan) => (
+            <option key={clan.ID} value={clan.ID}>
+              {clan.Name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Mobile Carousel */}
+      <div className="sm:hidden flex space-x-4 overflow-x-auto p-4 scrollbar-hide snap-x snap-mandatory no-scrollbar h-52">
         {clans.map((clan) => (
           <div
             key={clan.ID}
+            ref={(el) => (clanRefs.current[clan.ID] = el)}
             className={`relative flex flex-col items-center min-w-48 min-h-[180px] max-h-[180px] my-auto p-4 justify-center rounded-lg border border-gray-300 shadow-md transition hover:shadow-lg cursor-pointer overflow-hidden hover:scale-105 duration-300 ease-in-out ${
               clanSelect === clan.ID
                 ? "bg-[var(--color-foreground-soft)]"
@@ -117,7 +146,7 @@ export default function ClanSelection({
                 alt={`${clan.Name} Symbol`}
                 fill
                 className={`object-cover opacity-15 blur-[1px] select-none ${
-                  isDarkMode && "invert"
+                  isDarkMode ? "invert" : ""
                 }`}
               />
             </div>
