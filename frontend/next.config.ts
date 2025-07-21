@@ -9,16 +9,18 @@ const nextConfig: NextConfig = {
         hostname: "cdn-icons-png.flaticon.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.discordapp.com",
+        pathname: "/**",
+      },
     ],
   },
 };
-
-module.exports = {
-  images: {
-    domains: ["cdn-icons-png.flaticon.com"],
-  },
-};
-
-
 
 export default nextConfig;

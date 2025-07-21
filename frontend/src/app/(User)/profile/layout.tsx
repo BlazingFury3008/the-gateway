@@ -5,17 +5,14 @@ import ProfileSidebar from "@/components/ProfilePage/ProfileSidebar";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useEffect } from "react";
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    setSidebarOpen(false); // Close sidebar when navigating
   }, [pathname]);
 
   return (

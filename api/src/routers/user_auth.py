@@ -7,6 +7,7 @@ from models import User
 from pydantic import BaseModel, EmailStr
 import uuid
 from datetime import datetime
+import json
 
 router = APIRouter()
 
@@ -41,7 +42,6 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             "config": user.config
         },
     }
-
 
 @router.post("/signup")
 async def signup(request: SignupRequest, db: Session = Depends(get_db)):
@@ -114,3 +114,52 @@ async def refresh_token(request: Request, db: Session = Depends(get_db)):
 
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+@router.post("/google-auth")
+async def google_auth(request: Request, db: Session = Depends(get_db)):
+    """
+    Handles Google OAuth user verification and provisioning.
+    1. Check if email exists:
+        T. Is account connected to Google?
+            T. Login
+            F. Refuse login
+        F. Create account and return user
+    """
+    body = await request.json()
+
+    account = body.get("account")
+    profile = body.get("profile")
+    email = profile.get("email") if profile else None
+
+    if not account or account.get("provider") != "google":
+        raise HTTPException(status_code=400, detail="Invalid account provider")
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Missing email from Google profile")
+
+
+    print(email)
+    
+@router.post("/discord-auth")
+async def discord_auth(request: Request, db: Session= Depends(get_db)):
+    """Check account auth to discord
+    1. Does Email Exist
+        T. Is the Account Connected To Discord
+            T. Login
+            F. Refuse Login
+        F. Create Account, Return User
+    """
+    body = await request.json()
+
+    account = body.get("account")
+    profile = body.get("profile")
+    email = profile.get("email") if profile else None
+
+    if not account or account.get("provider") != "google":
+        raise HTTPException(status_code=400, detail="Invalid account provider")
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Missing email from Google profile")
+
+
+    print(email)

@@ -16,12 +16,16 @@ import {
   defaultAttributes,
   defaultSkills,
   DisciplinePower,
+  default_config,
+  config_interface,
 } from "@/data/vtm5_characterCreation";
 import api from "@/lib/axios";
 import Attributes from "@/components/character-creation/vtm5/Attributes";
 import Skills from "@/components/character-creation/vtm5/Skills";
 import Specialities from "@/components/character-creation/vtm5/Specialities";
 import Disciplines from "@/components/character-creation/vtm5/Disciplines";
+import Config from "@/components/character-creation/vtm5/Config";
+import BasicStats from "@/components/character-creation/vtm5/BasicStats";
 
 export default function CharacterCreationPage() {
   //Selected Data
@@ -56,23 +60,19 @@ export default function CharacterCreationPage() {
     dropdownSkill: "",
     dropdownSpec: "",
   });
-  const [selectedDisciplinePowers, setSelectedDisciplinePowers] = useState<DisciplinePower[]>(
-    []
-  );
+  const [selectedDisciplinePowers, setSelectedDisciplinePowers] = useState<
+    DisciplinePower[]
+  >([]);
 
   //Page Logic
   const [page, setPage] = useState<number>(0);
-  const searchParams = useSearchParams();
-  const mode = searchParams.get("mode");
-  const optionalRules = searchParams.get("optional_rules")?.split(" ") || [];
-
-  // Optional Rules
-  const or_variantBane = optionalRules.includes("variant-bane");
-  const or_additionFlaw = optionalRules.includes("additional-flaw");
+  const [isConfirm, setIsConfirm] = useState(false);
+  const [configOption, setConfigOptions] =
+    useState<config_interface>(default_config);
 
   // Merit and Flaw limits based on mode
-  const maxMerits = mode === "ancilla" ? 9 : 7;
-  const minFlaws = mode === "ancilla" ? 4 : 2;
+  const maxMerits = configOption.age === "ancilla" ? 9 : 7;
+  const minFlaws = configOption.age === "ancilla" ? 4 : 2;
   const [meritPoints, setMeritPoints] = useState(maxMerits);
   const [flawPoints, setFlawPoints] = useState(minFlaws);
 
@@ -202,7 +202,7 @@ export default function CharacterCreationPage() {
           (acc, flaw) => acc + parseInt(flaw.Values, 10) || 0,
           0
         );
-      if (or_additionFlaw && flawVal < 0) flawDiff = -flawVal;
+      if (configOption.additionalFlaw && flawVal < 0) flawDiff = -flawVal;
       setFlawPoints(Math.max(flawVal, 0));
     }
     if (caitiffAdv.merits) {
@@ -223,16 +223,29 @@ export default function CharacterCreationPage() {
       caitiffAdv.flaws.some((flaw) => flaw.Name === "Clan Curse")) ||
     (selectedClan === 16 &&
       thinbloodAdv.flaws.some((flaw) => flaw.Name === "Clan Curse")) ||
-    (selectedClan !== null && selectedClan < 15 && or_variantBane);
+    (selectedClan !== null && selectedClan < 15 && configOption.variantBane);
 
   const allPages: { component: ReactElement; check: boolean }[] = [
+    {
+      component: (
+        <Config
+          configOption={configOption}
+          setConfigOptions={setConfigOptions}
+        />
+      ),
+      check: true,
+    },
+    {
+      component: <BasicStats />,
+      check: true,
+    },
     {
       component: (
         <ClanSelection
           clans={clans}
           onClanSelect={setSelectedClan}
           clanSelect={selectedClan}
-          isVariant={or_variantBane}
+          isVariant={configOption.variantBane}
           disciplines={disciplines}
           disciplineJunction={disciplineJunction}
         />
@@ -268,7 +281,7 @@ export default function CharacterCreationPage() {
         <ClanBaneSelection
           selectedClan={selectedClan}
           thinbloodAdv={thinbloodAdv}
-          isVariant={or_variantBane}
+          isVariant={configOption.variantBane}
           clans={clans}
           setSelectedBane={setSelectedBane}
           selectedBane={selectedBane}
@@ -315,6 +328,7 @@ export default function CharacterCreationPage() {
           disciplineGroups={disciplines}
           selectedDisciplines={selectedDisciplinePowers}
           setSelectedDisciplines={setSelectedDisciplinePowers}
+          thinbloodAdv={thinbloodAdv}
         />
       ),
       check: true,
@@ -332,6 +346,10 @@ export default function CharacterCreationPage() {
   }
 
   function handleNextStep() {
+    if (page == 0) {
+      setIsConfirm(true);
+      return;
+    }
     for (let index = 1; index < allPages.length - page; index++) {
       if (allPages[page + index].check) {
         setPage(page + index);
@@ -343,22 +361,22 @@ export default function CharacterCreationPage() {
 
   // Disable "Next" button conditions
   const isDisabled = useMemo(() => {
-    if (page === 0) return selectedClan === null;
-    if (page === 1) {
+    if (page === 2) return selectedClan === null;
+    if (page === 3) {
       if (selectedClan === 15) return meritPoints < 0;
       if (selectedClan === 16)
         return thinbloodAdv.merits.length !== thinbloodAdv.flaws.length;
     }
-    if (page === 3) {
+    if (page === 5) {
       return selectedBane == "";
     }
-    if (page == 4) {
+    if (page == 6) {
       return (
         JSON.stringify(selectedAttributes.map((val) => val.value).sort()) !==
         JSON.stringify([...attributeLayout].sort())
       );
     }
-    if (page == 5) {
+    if (page == 7) {
       return !(
         JSON.stringify(
           selectedSkills
@@ -380,7 +398,7 @@ export default function CharacterCreationPage() {
         ) === JSON.stringify([...jackofall].sort())
       );
     }
-    if (page === 6) {
+    if (page === 8) {
       const getSkillValue = (skillName: string) => {
         const skill = selectedSkills.find((val) => val.skill === skillName);
         return skill ? skill.value : 0; // Default to 0 if skill is not found to avoid errors
@@ -433,12 +451,40 @@ export default function CharacterCreationPage() {
           {loading && <div>Loading Data..</div>}
           {!loading && allPages[page].component}
         </div>
+        {isConfirm && (
+  <div className="fixed inset-0 z-50 backdrop-blur-sm flex items-center justify-center">
+    <div className="bg-[var(--color-background)] text-[var(--color-foreground)] rounded-lg p-6 shadow-lg w-full max-w-md modal-enter">
+      <h2 className="text-xl font-bold mb-4">Confirm Configuration</h2>
+      <p className="mb-6">
+        Are you sure you want to continue? Your configuration choices (such as Age, Variant Bane, etc.) will be locked in and cannot be changed later.
+      </p>
+      <div className="flex justify-end space-x-4">
+        <button
+          onClick={() => setIsConfirm(false)}
+          className="btn bg-gray-300 text-gray-900 hover:bg-gray-400 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            setIsConfirm(false);
+            setPage(1); // Proceed to next step
+          }}
+          className="btn btn-danger"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
 
       <div className="flex justify-between mt-6">
         <button
           onClick={handleBackStep}
-          disabled={page === 0}
+          disabled={page < 2}
           className="px-6 py-3 bg-red-600 text-white rounded-lg shadow-md disabled:bg-gray-400 transition-all duration-300 ease-in-out hover:bg-red-700"
         >
           Back

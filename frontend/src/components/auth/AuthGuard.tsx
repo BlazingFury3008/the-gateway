@@ -10,7 +10,7 @@ export default function AuthGuard({requiredAuthLevel }: {requiredAuthLevel: numb
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login"); // Redirect to login if not authenticated
+      router.push("/"); // Redirect to login if not authenticated
     } else if (status === "authenticated" && requiredAuthLevel !== null) {
       // Ensure the user has the correct authorization level
       if (!session?.user?.auth || session.user.auth < requiredAuthLevel) {

@@ -19,6 +19,38 @@ export const optionalRulesSelection:  { label: string; href: string}[] = [
     { label: "In Coterie", href: "in-coterie",},
 ]
 
+export interface config_interface {
+  age: "childe" | "neonate" | "ancilla" | "custom";
+  variantBane: boolean;
+  additionalFlaw: boolean;
+  ritualPerLevel: boolean;
+  no_cap: boolean;
+  noprereq: boolean;
+  loresheets: boolean;
+  additionalXP:
+    | "none"
+    | "touch-up"
+    | "established"
+    | "major"
+    | "legend"
+    | "custom"
+    | "number"
+    | undefined;
+  customXP: undefined | number
+}
+
+export const default_config : config_interface = {
+  age: "childe",
+  variantBane: false,
+  additionalFlaw: false,
+  ritualPerLevel: false,
+  no_cap: false,
+  noprereq: false,
+  loresheets: false,
+  additionalXP: undefined,
+  customXP: 0
+}
+
 export const character_creation_modes = ["custom", "childe", "neonate", "ancilla"];
 
 export const defaultAttributes = [
