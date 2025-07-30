@@ -3,13 +3,14 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import DiscordProvider from "next-auth/providers/discord";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
+import jwt_decode from "jwt-decode";
 import api from "@/other/axios";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    // ✅ Regular credentials login
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -28,7 +29,7 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (res.data?.access_token) {
-            const decodedToken = jwtDecode<{ exp: number }>(res.data.access_token);
+            const decodedToken = jwt_decode<{ exp: number }>(res.data.access_token);
 
             return {
               id: res.data.user.uuid || res.data.user.id,
@@ -50,11 +51,13 @@ export const authOptions: NextAuthOptions = {
       },
     }),
 
+    // ✅ Google OAuth provider
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
 
+    // ✅ Discord OAuth provider
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID!,
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
@@ -67,6 +70,7 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, user, account, profile }) {
+      // When user signs in for the first time
       if (account && user) {
         let image = user.image || null;
 
@@ -115,27 +119,27 @@ export const authOptions: NextAuthOptions = {
       };
     },
 
-    async signIn({account, profile}) {
-      if(account?.provider === "google")
-      {
-        console.log("Google")
-        api.post("/google-auth", {
-          account:account,
-          profile:profile
-        })
-        
+    // ✅ Send OAuth login to backend and handle token
+    async signIn({ account, profile }) {
+      try {
+        if (account?.provider === "google") {
+          const res = await api.post("/google-auth", { account, profile });
+          if (res.data?.access_token) {
+            // Attach token to session
+            account.access_token = res.data.access_token;
+          }
+        } else if (account?.provider === "discord") {
+          const res = await api.post("/discord-auth", { account, profile });
+          if (res.data?.access_token) {
+            account.access_token = res.data.access_token;
+          }
+        }
+        return true;
+      } catch (err: any) {
+        console.error("OAuth sign-in error:", err.response?.data || err.message);
+        return false;
       }
-      else if(account?.provider == "discord")
-      {
-        console.log("Discord")
-        api.post("/discord-auth", {
-          account:account,
-          profile:profile
-        })
-      }
-
-      return true
-    }
+    },
   },
 
   pages: {

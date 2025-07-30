@@ -7,7 +7,6 @@ from models import User
 from pydantic import BaseModel, EmailStr
 import uuid
 from datetime import datetime
-import json
 
 router = APIRouter()
 
@@ -28,7 +27,6 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    # Generate JWT token
     token = create_jwt_token({"sub": user.uuid})
 
     return {
@@ -46,12 +44,10 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/signup")
 async def signup(request: SignupRequest, db: Session = Depends(get_db)):
     try:
-        # Check if user already exists
         existing_user = db.query(User).filter(User.email == request.email).first()
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered.")
 
-        # Hash password and create user with explicit UUID
         hashed_password = hash_password(request.password)
         new_user = User(
             uuid=str(uuid.uuid4()),
@@ -64,9 +60,7 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_user)
 
-        # Generate JWT token
         token = create_jwt_token({"sub": new_user.uuid})
-
         return {"id": new_user.uuid, "email": new_user.email, "access_token": token}
 
     except Exception:
@@ -77,7 +71,6 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
 async def refresh_token(request: Request, db: Session = Depends(get_db)):
     """Refresh the access token if it's still valid."""
     try:
-        print(request)
         body = await request.json()
         old_token = body.get("accessToken")
 
@@ -92,74 +85,106 @@ async def refresh_token(request: Request, db: Session = Depends(get_db)):
             raise HTTPException(status_code=401, detail="Invalid token")
 
         user_id = payload.get("sub")
-
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token: No user ID found")
 
         user = db.query(User).filter(User.uuid == user_id).first()
-
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
 
         exp_timestamp = payload.get("exp", 0)
         current_timestamp = datetime.utcnow().timestamp()
-
         if current_timestamp > exp_timestamp:
             raise HTTPException(status_code=401, detail="Token expired, login required")
 
-        # Generate a new access token
         new_token = create_jwt_token({"sub": user.uuid})
-
         return {"access_token": new_token}
 
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
-    
+
 @router.post("/google-auth")
 async def google_auth(request: Request, db: Session = Depends(get_db)):
     """
     Handles Google OAuth user verification and provisioning.
     1. Check if email exists:
-        T. Is account connected to Google?
-            T. Login
-            F. Refuse login
-        F. Create account and return user
+        - If yes and account connected → login
+        - If yes and account NOT connected → refuse login
+        - If no → create account and return user
     """
     body = await request.json()
-
     account = body.get("account")
     profile = body.get("profile")
     email = profile.get("email") if profile else None
+    google_id = account.get("providerAccountId") if account else None
 
     if not account or account.get("provider") != "google":
         raise HTTPException(status_code=400, detail="Invalid account provider")
+    if not email or not google_id:
+        raise HTTPException(status_code=400, detail="Missing Google account data")
 
-    if not email:
-        raise HTTPException(status_code=400, detail="Missing email from Google profile")
+    user = db.query(User).filter(User.email == email).first()
 
+    if user:
+        if user.google_id == google_id:
+            token = create_jwt_token({"sub": user.uuid})
+            return {"access_token": token, "user": {"uuid": user.uuid, "name": user.username, "email": user.email}}
+        else:
+            raise HTTPException(status_code=400, detail="Email already registered with a different login method")
+    else:
+        new_user = User(
+            uuid=str(uuid.uuid4()),
+            email=email,
+            username=profile.get("name", email.split("@")[0]),
+            google_id=google_id
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
 
-    print(email)
-    
+        token = create_jwt_token({"sub": new_user.uuid})
+        return {"access_token": token, "user": {"uuid": new_user.uuid, "name": new_user.username, "email": new_user.email}}
+
 @router.post("/discord-auth")
-async def discord_auth(request: Request, db: Session= Depends(get_db)):
-    """Check account auth to discord
-    1. Does Email Exist
-        T. Is the Account Connected To Discord
-            T. Login
-            F. Refuse Login
-        F. Create Account, Return User
+async def discord_auth(request: Request, db: Session = Depends(get_db)):
+    """
+    Handles Discord OAuth user verification and provisioning.
+    1. Check if email exists:
+        - If yes and account connected → login
+        - If yes and account NOT connected → refuse login
+        - If no → create account and return user
     """
     body = await request.json()
-
     account = body.get("account")
     profile = body.get("profile")
     email = profile.get("email") if profile else None
+    discord_id = account.get("providerAccountId") if account else None
 
-    if not account or account.get("provider") != "google":
+    if not account or account.get("provider") != "discord":
         raise HTTPException(status_code=400, detail="Invalid account provider")
+    if not email or not discord_id:
+        raise HTTPException(status_code=400, detail="Missing Discord account data")
 
-    if not email:
-        raise HTTPException(status_code=400, detail="Missing email from Google profile")
+    user = db.query(User).filter(User.email == email).first()
 
+    if user:
+        if user.discord_id == discord_id:
+            token = create_jwt_token({"sub": user.uuid})
+            return {"access_token": token, "user": {"uuid": user.uuid, "name": user.username, "email": user.email}}
+        else:
+            raise HTTPException(status_code=400, detail="Email already registered with a different login method")
+    else:
+        new_user = User(
+            uuid=str(uuid.uuid4()),
+            email=email,
+            username=profile.get("username", email.split("@")[0]),
+            discord_id=discord_id
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
 
-    print(email)
+        token = create_jwt_token({"sub": new_user.uuid})
+        return {"access_token": token, "user": {"uuid": new_user.uuid, "name": new_user.username, "email": new_user.email}}
