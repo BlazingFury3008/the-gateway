@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaDiscord, FaEye, FaEyeSlash } from "react-icons/fa";
+import { signIn } from "next-auth/react";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +32,9 @@ export default function Login() {
 
         <button
           type="submit"
+  
           className="bg-[var(--primary)] hover:bg-[var(--secondary)] rounded !p-2 text-white"
+          onClick={() => signIn()}
         >
           Login
         </button>
@@ -41,12 +44,16 @@ export default function Login() {
 
       {/* Social logins */}
       <div className="flex flex-col gap-2">
-        <button className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-black rounded !p-2 border">
+        <button 
+        onClick={() => signIn("google")}
+        className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-black rounded !p-2 border">
           <FcGoogle size={20} />
           <span>Continue with Google</span>
         </button>
 
-        <button className="flex items-center justify-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded !p-2">
+        <button 
+                onClick={() => signIn("google")}
+className="flex items-center justify-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded !p-2">
           <FaDiscord size={20} />
           <span>Continue with Discord</span>
         </button>

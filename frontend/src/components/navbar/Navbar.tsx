@@ -4,9 +4,10 @@ import NavProfile from "./NavProfile";
 import { FaMoon, FaSun } from "react-icons/fa";
 import Login from "./Login";
 import Signup from "./Signup";
+import { useSession } from "next-auth/react";
 
 export default function Navbar() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const {data: session, status} = useSession()
   const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
   // Load theme from localStorage on mount
@@ -46,7 +47,7 @@ export default function Navbar() {
         </div>
         {/* Login/Signup + Theme Toggle */}
         <div className="w-3/11 h-full items-center flex space-x-2">
-          {loggedIn ? <NavProfile /> : <LoginComponent />}
+          {status === "authenticated" ? <NavProfile /> : <LoginComponent />}
           {theme && (
             <button
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
@@ -65,6 +66,7 @@ export default function Navbar() {
 function LoginComponent() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
