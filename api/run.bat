@@ -1,3 +1,5 @@
 @echo off
-cd /d "%~dp0src"
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+cd /d "%~dp0"
+set FLASK_APP=app.py
+set FLASK_ENV=development
+flask run --host=0.0.0.0 --port=5000
