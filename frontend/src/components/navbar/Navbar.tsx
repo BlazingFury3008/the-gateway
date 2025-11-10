@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import NavProfile from "./NavProfile";
 import { FaMoon, FaSun, FaBars, FaTimes } from "react-icons/fa";
@@ -6,34 +7,21 @@ import Login from "./Login";
 import Signup from "./Signup";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/app/theme-provider";
 
 export default function Navbar() {
-  const { data: session, status } = useSession();
-  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
+  const { data: session, status, update } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const router = useRouter();
 
-  // Load theme from localStorage
+  // Sync session when component mounts (in case NextAuth hasn't hydrated yet)
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute("data-theme", savedTheme);
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const initialTheme = prefersDark ? "dark" : "light";
-      setTheme(initialTheme);
-      document.documentElement.setAttribute("data-theme", initialTheme);
-    }
-  }, []);
+    if (status === "loading") update();
+  }, [status, update]);
 
-  // Apply theme changes
-  useEffect(() => {
-    if (theme) {
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem("theme", theme);
-    }
-  }, [theme]);
+  // Handle early render while NextAuth loads
+  const isLoading = status === "loading";
 
   return (
     <nav
@@ -49,30 +37,34 @@ export default function Navbar() {
         The Gateway
       </h1>
 
-      {/* Desktop nav (placeholder for future links) */}
+      {/* Placeholder for center nav links */}
       <div className="hidden sm:flex gap-4 items-center" />
 
       {/* Right side */}
       <div className="flex items-center gap-3">
         {/* Theme toggle */}
-        {theme && (
-          <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="!p-2 !rounded-full bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-white transition"
-          >
-            {theme === "light" ? <FaMoon /> : <FaSun />}
-          </button>
-        )}
+        <button
+          onClick={toggleTheme}
+          className="!p-3 !rounded-full bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-white transition"
+          aria-label="Toggle Theme"
+        >
+          {theme === "light" ? <FaMoon /> : <FaSun />}
+        </button>
 
-        {/* Desktop login/profile */}
+        {/* Desktop Login/Profile */}
         <div className="hidden sm:block">
-          {status === "authenticated" ? <NavProfile /> : <LoginComponent />}
+          {isLoading ? null : status === "authenticated" ? (
+            <NavProfile />
+          ) : (
+            <LoginComponent />
+          )}
         </div>
 
         {/* Mobile drawer toggle */}
         <button
           className="sm:hidden p-2 rounded-md text-[var(--foreground)] border border-[var(--border)]"
           onClick={() => setDrawerOpen(true)}
+          aria-label="Open menu"
         >
           <FaBars />
         </button>
@@ -94,16 +86,17 @@ export default function Navbar() {
             drawerOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          {/* Close */}
+          {/* Close button */}
           <button
             className="self-end p-2 text-[var(--foreground)]"
             onClick={() => setDrawerOpen(false)}
+            aria-label="Close menu"
           >
             <FaTimes size={20} />
           </button>
 
           {/* Drawer content */}
-          {status === "authenticated" ? (
+          {isLoading ? null : status === "authenticated" ? (
             <NavProfile />
           ) : (
             <LoginComponent mobile />
@@ -118,11 +111,23 @@ export default function Navbar() {
 function LoginComponent({ mobile = false }: { mobile?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Click outside detection for dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (mobile) {
     return (
       <>
-        {/* Trigger button inside drawer */}
+        {/* Drawer login button */}
         <button
           onClick={() => setIsOpen(true)}
           className="w-full px-4 py-2 rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:bg-[var(--primary)] hover:text-white transition"
@@ -138,42 +143,39 @@ function LoginComponent({ mobile = false }: { mobile?: boolean }) {
           onClick={() => setIsOpen(false)}
         />
 
-        {/* Full-width top sheet */}
+        {/* Modal */}
         <div
           className={`fixed top-0 left-0 w-full max-h-[90%] bg-[var(--navbar)] border-b border-[var(--border)] shadow-xl z-50 transform transition-transform duration-300 ${
             isOpen ? "translate-y-0" : "-translate-y-full"
           }`}
         >
-          {/* Header */}
+          {/* Tabs header */}
           <div className="flex justify-between items-center p-4 border-b border-[var(--border)]">
             <div className="flex gap-4">
-              <button
-                className={`pb-2 transition-colors ${
-                  activeTab === "login"
-                    ? "border-b-2 border-[var(--primary)] font-semibold"
-                    : "text-[var(--muted)]"
-                }`}
-                onClick={() => setActiveTab("login")}
-              >
-                Login
-              </button>
-              <button
-                className={`pb-2 transition-colors ${
-                  activeTab === "signup"
-                    ? "border-b-2 border-[var(--primary)] font-semibold"
-                    : "text-[var(--muted)]"
-                }`}
-                onClick={() => setActiveTab("signup")}
-              >
-                Sign Up
-              </button>
+              {["login", "signup"].map((tab) => (
+                <button
+                  key={tab}
+                  className={`pb-2 transition-colors ${
+                    activeTab === tab
+                      ? "border-b-2 border-[var(--primary)] font-semibold"
+                      : "text-[var(--muted)]"
+                  }`}
+                  onClick={() => setActiveTab(tab as "login" | "signup")}
+                >
+                  {tab === "login" ? "Login" : "Sign Up"}
+                </button>
+              ))}
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-[var(--muted)]">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-[var(--muted)]"
+              aria-label="Close modal"
+            >
               <FaTimes />
             </button>
           </div>
 
-          {/* Content */}
+          {/* Form body */}
           <div className="p-4 overflow-y-auto max-h-[70vh]">
             {activeTab === "login" ? <Login /> : <Signup />}
           </div>
@@ -182,25 +184,7 @@ function LoginComponent({ mobile = false }: { mobile?: boolean }) {
     );
   }
 
-  /* --- Desktop dropdown version --- */
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
+  // Desktop dropdown
   return (
     <div className="relative" ref={wrapperRef}>
       <button
@@ -217,31 +201,21 @@ function LoginComponent({ mobile = false }: { mobile?: boolean }) {
             : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
         }`}
       >
-        {/* Tabs */}
         <div className="flex gap-4 mb-4 border-b border-[var(--border)]">
-          <button
-            className={`pb-2 transition-colors ${
-              activeTab === "login"
-                ? "border-b-2 border-[var(--primary)] font-semibold"
-                : "text-[var(--muted)]"
-            }`}
-            onClick={() => setActiveTab("login")}
-          >
-            Login
-          </button>
-          <button
-            className={`pb-2 transition-colors ${
-              activeTab === "signup"
-                ? "border-b-2 border-[var(--primary)] font-semibold"
-                : "text-[var(--muted)]"
-            }`}
-            onClick={() => setActiveTab("signup")}
-          >
-            Sign Up
-          </button>
+          {["login", "signup"].map((tab) => (
+            <button
+              key={tab}
+              className={`pb-2 transition-colors ${
+                activeTab === tab
+                  ? "border-b-2 border-[var(--primary)] font-semibold"
+                  : "text-[var(--muted)]"
+              }`}
+              onClick={() => setActiveTab(tab as "login" | "signup")}
+            >
+              {tab === "login" ? "Login" : "Sign Up"}
+            </button>
+          ))}
         </div>
-
-        {/* Content */}
         <div className="relative min-h-[280px] overflow-hidden">
           {activeTab === "login" ? <Login /> : <Signup />}
         </div>

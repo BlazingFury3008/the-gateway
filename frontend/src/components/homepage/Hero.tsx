@@ -1,6 +1,8 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { useTheme } from "@/app/theme-provider";
 
 export default function Hero() {
   const images = [
@@ -21,7 +23,7 @@ export default function Hero() {
   const intervalTime = 5000;
   const [current, setCurrent] = useState(0);
   const [progressing, setProgressing] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const { theme } = useTheme(); // use theme directly from provider
 
   // Auto-advance carousel
   useEffect(() => {
@@ -31,27 +33,12 @@ export default function Hero() {
     return () => clearInterval(timer);
   }, [images.length]);
 
-  // Restart progress bar animation
+  // Restart progress bar animation when image changes
   useEffect(() => {
     setProgressing(false);
     const t = setTimeout(() => setProgressing(true), 50);
     return () => clearTimeout(t);
   }, [current]);
-
-  // Detect theme (based on <html data-theme="...">)
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      const docTheme = document.documentElement.getAttribute("data-theme");
-      if (docTheme === "dark" || docTheme === "light") {
-        setTheme(docTheme);
-      }
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
-    return () => observer.disconnect();
-  }, []);
 
   // Smooth scroll helper
   const scrollToSection = (id: string) => {
@@ -120,7 +107,7 @@ export default function Hero() {
           </button>
         </div>
 
-        {/* Indicators */}
+        {/* Progress indicators */}
         <div className="flex gap-1 sm:gap-2 mt-2 items-center">
           {images.map((_, idx) => {
             const isPast = idx < current;
