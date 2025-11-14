@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -13,19 +13,10 @@ export default function Signup() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const { update } = useSession();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
-
-    if (!email || !username || !password || !confirmPassword) {
-      setError("All fields are required.");
-      return;
-    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -35,24 +26,20 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      // Use NextAuth credentials provider to trigger Flask /auth/signup
       const res = await signIn("credentials", {
         email,
         username,
         password,
         isSignup: "true",
-        redirect: false,
+        callbackUrl: window.location.pathname, // 🔥 return to where they were
+        redirect: true,                       // 🔥 required for redirects
       });
 
-      if (res?.error) {
-        setError("Signup failed. Please try again.");
-      } else if (res?.ok) {
-        setSuccess("Account created successfully!");
-        await update(); // Refresh session instantly
-      }
+      // NOTE: we do NOT manually redirect — NextAuth will.
+      // res will be null or a URL (depends on provider).
     } catch (err) {
       console.error(err);
-      setError("An unexpected error occurred.");
+      setError("Signup failed.");
     } finally {
       setLoading(false);
     }
@@ -119,17 +106,10 @@ export default function Signup() {
           </button>
         </div>
 
-        {/* Error / Success Messages */}
         {error && (
           <p className="text-red-500 text-sm font-medium text-center">{error}</p>
         )}
-        {success && (
-          <p className="text-green-500 text-sm font-medium text-center">
-            {success}
-          </p>
-        )}
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}

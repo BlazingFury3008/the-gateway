@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import Navbar from "@/components/navbar/Navbar";
 import Providers from "./providers";
+import SystemModal from "@/components/SystemModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: setInitialTheme }}
         />
         <Providers>
+          <SystemModal />
           <Navbar />
           <main>{children}</main>
         </Providers>

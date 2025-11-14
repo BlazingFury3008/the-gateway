@@ -36,11 +36,10 @@ def signup():
     existing = User.query.filter_by(email=email).first()
 
     if existing:
-        # If user already exists, just return their data (no duplicate)
-        token = create_jwt(existing.id, existing.email)
-        user_data = existing.to_dict()
-        user_data["accessToken"] = token
-        return jsonify(user_data), 200
+        # ❌ Do NOT allow signup when OAuth account exists
+        return jsonify({
+            "error": "This email is already registered. Please log in using that method or add a password from your profile."
+        }), 409
 
     hashed_pwd = generate_password_hash(password)
     user = User(
@@ -78,20 +77,24 @@ def login():
 
 
 # ---------------------------------------------------------
-# SYNC USER (OAuth auto-link)
+# SYNC USER (OAuth auto-link or conflict return)
 # ---------------------------------------------------------
 @auth_bp.route("/sync-user", methods=["POST"])
 def sync_user():
     """
     Called by NextAuth after OAuth login.
-    - Links provider if user exists
-    - Creates a new user otherwise
-    - Updates username/image if previously missing
+
+    Behavior:
+      ✔ If account DOES exist (same email)
+         - If provider already linked → Login OK
+         - If provider NOT linked → return 403 (user must manually link)
+
+      ✔ If account does NOT exist → create new OAuth user
     """
     data = request.get_json()
     email = data.get("email")
-    name = data.get("name")
     provider = data.get("provider")
+    name = data.get("name")
     image = data.get("image")
 
     if not email or not provider:
@@ -99,30 +102,43 @@ def sync_user():
 
     user = User.query.filter_by(email=email).first()
 
-    if not user:
-        # --- Create new user from OAuth ---
-        user = User(
-            email=email,
-            username=name or email.split("@")[0],
-            image=image,
-            linked_accounts=[provider],
-        )
-        db.session.add(user)
-    else:
-        # --- Existing user: update missing info ---
+    # ------------------------------------------------------------------
+    # CASE 1: Existing user found
+    # ------------------------------------------------------------------
+    if user:
         linked = user.linked_accounts or []
-        if provider not in linked:
-            linked.append(provider)
-            user.linked_accounts = linked
 
-        # Fill in missing username if blank/null
+        # Provider NOT linked yet → require manual linking (403)
+        if provider not in linked:
+            return jsonify({
+                "error": f"This email is already registered via another login method. "
+                         f"Please log in normally and manually link {provider.capitalize()} "
+                         f"from your profile settings."
+            }), 403
+
+        # Provider is linked → update fields if missing and allow login
         if not user.username and name:
             user.username = name
-
-        # Add image if not already set or empty
         if not user.image and image:
             user.image = image
 
+        db.session.commit()
+
+        token = create_jwt(user.id, user.email)
+        user_data = user.to_dict()
+        user_data["accessToken"] = token
+        return jsonify(user_data), 200
+
+    # ------------------------------------------------------------------
+    # CASE 2: No account exists → create new OAuth user
+    # ------------------------------------------------------------------
+    user = User(
+        email=email,
+        username=name or email.split("@")[0],
+        image=image,
+        linked_accounts=[provider],
+    )
+    db.session.add(user)
     db.session.commit()
 
     token = create_jwt(user.id, user.email)
@@ -132,14 +148,13 @@ def sync_user():
 
 
 # ---------------------------------------------------------
-# LINK PROVIDER (manual link from profile)
+# LINK PROVIDER (manual linking, emails may differ)
 # ---------------------------------------------------------
 @auth_bp.route("/link-provider", methods=["POST"])
 def link_provider():
     """
-    Called when a logged-in user manually links a provider
-    from their account page.
-    Expects: user_email (main account), provider_email, provider
+    Allows linking ANY provider to ANY user,
+    even when emails differ.
     """
     data = request.get_json()
     user_email = data.get("user_email")
@@ -153,18 +168,19 @@ def link_provider():
     if not main_user:
         return jsonify({"error": "Main account not found"}), 404
 
-    existing = User.query.filter_by(email=provider_email).first()
-    if existing and existing.id != main_user.id:
-        # Merge duplicate OAuth account into main
-        merged_accounts = list(
-            set(main_user.linked_accounts + existing.linked_accounts + [provider])
-        )
-        main_user.linked_accounts = merged_accounts
-        if existing.image and not main_user.image:
-            main_user.image = existing.image
-        if existing.username and not main_user.username:
-            main_user.username = existing.username
-        db.session.delete(existing)
+    # If there is a separate OAuth account, merge them
+    oauth_user = User.query.filter_by(email=provider_email).first()
+
+    if oauth_user and oauth_user.id != main_user.id:
+        merged = list(set(main_user.linked_accounts + oauth_user.linked_accounts + [provider]))
+        main_user.linked_accounts = merged
+
+        if oauth_user.image and not main_user.image:
+            main_user.image = oauth_user.image
+        if oauth_user.username and not main_user.username:
+            main_user.username = oauth_user.username
+
+        db.session.delete(oauth_user)
         db.session.commit()
     else:
         linked = main_user.linked_accounts or []

@@ -7,7 +7,9 @@ const FLASK_API_BASE = process.env.FLASK_API_BASE ?? "http://localhost:5000";
 
 export const authOptions: NextAuthOptions = {
   providers: [
-    // --- Email, Password, and Username (for signup) ---
+    // ----------------------------------------------------
+    // EMAIL + PASSWORD
+    // ----------------------------------------------------
     CredentialsProvider({
       name: "Email & Password",
       credentials: {
@@ -16,6 +18,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
         isSignup: { label: "Signup", type: "text" },
       },
+
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
@@ -40,17 +43,18 @@ export const authOptions: NextAuthOptions = {
             body: JSON.stringify(payload),
           });
 
+          if (res.status === 409) {
+            const error = await res.json();
+            throw new Error(error.error || "Signup failed");
+          }
+
           if (!res.ok) {
-            console.error(
-              `[Flask Auth] ${isSignup ? "Signup" : "Login"} failed:`,
-              await res.text()
-            );
-            return null;
+            const text = await res.text();
+            throw new Error(text || "Login/Signup failed");
           }
 
           const user = await res.json();
 
-          // Use only authoritative Flask data
           return {
             id: user.id?.toString() ?? user.email,
             name: user.username ?? user.name ?? user.email,
@@ -59,20 +63,24 @@ export const authOptions: NextAuthOptions = {
             linked_accounts: user.linked_accounts ?? [],
             accessToken: user.accessToken ?? null,
           };
-        } catch (err) {
-          console.error("Error connecting to Flask API:", err);
-          return null;
+        } catch (err: any) {
+          console.error("Flask auth failed:", err.message);
+          throw new Error(err.message || "Authentication failed");
         }
       },
     }),
 
-    // --- Google OAuth ---
+    // ----------------------------------------------------
+    // GOOGLE
+    // ----------------------------------------------------
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
 
-    // --- Discord OAuth ---
+    // ----------------------------------------------------
+    // DISCORD
+    // ----------------------------------------------------
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID ?? "",
       clientSecret: process.env.DISCORD_CLIENT_SECRET ?? "",
@@ -81,8 +89,10 @@ export const authOptions: NextAuthOptions = {
 
   session: { strategy: "jwt" },
 
+  // --------------------------------------------------------
+  // CALLBACKS
+  // --------------------------------------------------------
   callbacks: {
-    // Sync Google/Discord users to Flask and always prefer Flask’s data
     async signIn({ user, account }) {
       if (account?.provider === "credentials") return true;
 
@@ -98,14 +108,16 @@ export const authOptions: NextAuthOptions = {
           }),
         });
 
-        if (!res.ok) {
-          console.error("Flask sync failed:", await res.text());
-          return false;
+        if (res.status === 403) {
+          const data = await res.json();
+          const msg = encodeURIComponent(data.error || "Account conflict");
+          throw new Error(msg);
         }
+
+        if (!res.ok) return false;
 
         const flaskUser = await res.json();
 
-        // Overwrite user data with Flask’s canonical record
         user.name =
           flaskUser.username ??
           flaskUser.name ??
@@ -113,18 +125,18 @@ export const authOptions: NextAuthOptions = {
           flaskUser.email;
         user.email = flaskUser.email ?? user.email;
         user.image = flaskUser.image ?? user.image;
+
         (user as any).linked_accounts = flaskUser.linked_accounts ?? [];
         (user as any).accessToken = flaskUser.accessToken ?? null;
 
         return true;
       } catch (err) {
-        console.error("Error syncing Flask user:", err);
-        return false;
+        console.error("OAuth sync error:", err);
+        throw err;
       }
     },
 
     async jwt({ token, user }) {
-      // Merge user data into token (from Flask’s record)
       if (user) {
         token.name = user.name;
         token.email = user.email;
@@ -136,19 +148,52 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      // Reflect canonical Flask user info in session
-      if (token) {
-        session.user = {
-          ...session.user,
-          name: token.name,
-          email: token.email,
-          image: token.picture,
-        };
-        (session as any).linked_accounts = token.linked_accounts;
-        (session as any).accessToken = token.accessToken;
-      }
+      session.user = {
+        ...session.user,
+        name: token.name,
+        email: token.email,
+        image: token.picture,
+      };
+      (session as any).linked_accounts = token.linked_accounts;
+      (session as any).accessToken = token.accessToken;
       return session;
     },
+
+    // --------------------------------------------------------
+    // REDIRECT: ALWAYS RETURN TO PRIOR PAGE
+    // --------------------------------------------------------
+    async redirect({ url, baseUrl }) {
+      const parsed = new URL(url, baseUrl);
+
+      const error = parsed.searchParams.get("error");
+      let callback = parsed.searchParams.get("callbackUrl");
+
+      // Fallback 1: nextauth referer
+      const referer = parsed.searchParams.get("referer");
+      if (!callback && referer) callback = referer;
+
+      // Fallback 2: browser referrer
+      if (!callback && typeof window !== "undefined" && document.referrer) {
+        callback = document.referrer;
+      }
+
+      // Final fallback
+      if (!callback) callback = baseUrl;
+
+      // Error → go back with ?error=
+      if (error) {
+        return `${callback}?error=${encodeURIComponent(error)}`;
+      }
+
+      return callback;
+    },
+  },
+
+  // --------------------------------------------------------
+  // IMPORTANT: disable default NextAuth error redirect
+  // --------------------------------------------------------
+  pages: {
+    error: "/", // prevents /api/auth/error redirection
   },
 
   secret: process.env.NEXTAUTH_SECRET,
