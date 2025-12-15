@@ -8,6 +8,40 @@ import os
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "supersecretkey")
 
+from functools import wraps
+
+def decode_jwt(token: str):
+    return jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+
+def get_bearer_token():
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    return auth.split(" ", 1)[1].strip()
+
+def require_auth(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        token = get_bearer_token()
+        if not token:
+            return jsonify({"error": "Missing Authorization header"}), 401
+        try:
+            payload = decode_jwt(token)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token"}), 401
+
+        user = User.query.get(payload.get("id"))
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+
+        # Attach to request context (simple + effective)
+        request.user = user
+        return f(*args, **kwargs)
+    return wrapper
+
+
 # ---------------------------------------------------------
 # Helper: create JWT
 # ---------------------------------------------------------
@@ -67,8 +101,55 @@ def login():
     password = data.get("password")
 
     user = User.query.filter_by(email=email).first()
-    if not user or not check_password_hash(user.password, password):
+    if not user or not user.password:
+        return jsonify({"error": "No password set for this account. Please log in with Discord/Google, then set a password in settings."}), 401
+
+    if not check_password_hash(user.password, password):
         return jsonify({"error": "Invalid credentials"}), 401
+
+    token = create_jwt(user.id, user.email)
+    user_data = user.to_dict()
+    user_data["accessToken"] = token
+    return jsonify(user_data), 200
+
+
+@auth_bp.route("/set-password", methods=["POST"])
+@require_auth
+def set_password():
+    """
+    Set password for an OAuth-only account OR change existing password.
+
+    Request JSON:
+      - new_password (required)
+      - current_password (required only if user already has a password)
+    """
+    data = request.get_json() or {}
+    new_password = data.get("new_password")
+    current_password = data.get("current_password")
+
+    user: User = request.user
+
+    if not new_password or len(new_password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters."}), 400
+
+    already_has_password = bool(user.password)
+
+    # If changing existing password, verify current
+    if already_has_password:
+        if not current_password:
+            return jsonify({"error": "Current password is required to change your password."}), 400
+        if not check_password_hash(user.password, current_password):
+            return jsonify({"error": "Current password is incorrect."}), 401
+
+    user.password = generate_password_hash(new_password)
+
+    linked = user.linked_accounts or []
+    linked_lower = {str(x).lower() for x in linked}
+    if "credentials" not in linked_lower:
+        linked.append("credentials")
+        user.linked_accounts = linked
+
+    db.session.commit()
 
     token = create_jwt(user.id, user.email)
     user_data = user.to_dict()

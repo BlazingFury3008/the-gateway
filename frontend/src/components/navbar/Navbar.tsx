@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import NavProfile from "./NavProfile";
 import { FaMoon, FaSun, FaBars, FaTimes } from "react-icons/fa";
 import Login from "./Login";
-import Signup from "./Signup";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/theme-provider";
@@ -181,7 +180,7 @@ function LoginComponent({ mobile = false }: { mobile?: boolean }) {
 
           {/* Content */}
           <div className="p-4 overflow-y-auto max-h-[70vh]">
-            {activeTab === "login" ? <Login /> : <Signup />}
+             <Login />
           </div>
         </div>
       </>
@@ -205,25 +204,9 @@ function LoginComponent({ mobile = false }: { mobile?: boolean }) {
             : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
         }`}
       >
-        <div className="flex gap-4 mb-4 border-b border-[var(--border)]">
-          {["login", "signup"].map((tab) => (
-            <button
-              key={tab}
-              className={`pb-2 transition-colors ${
-                activeTab === tab
-                  ? "border-b-2 border-[var(--primary)] font-semibold"
-                  : "text-[var(--muted)]"
-              }`}
-              onClick={() => setActiveTab(tab as "login" | "signup")}
-            >
-              {tab === "login" ? "Login" : "Sign Up"}
-            </button>
-          ))}
-        </div>
-
         {/* Content */}
         <div className="relative min-h-[280px] overflow-hidden">
-          {activeTab === "login" ? <Login /> : <Signup />}
+          <Login />
         </div>
       </div>
     </div>

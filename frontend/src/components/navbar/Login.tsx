@@ -98,21 +98,12 @@ export default function Login() {
       <div className="my-4 border-t border-[var(--border)]" />
 
       {/* Social logins */}
-      <div className="flex flex-col gap-2">
-        <button
-          onClick={() => handleSocialLogin("google")}
-          className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-black rounded p-2 border transition"
-        >
-          <FcGoogle size={20} />
-          <span>Continue with Google</span>
-        </button>
-
-        <button
+      <div className="flex flex-col gap-2">        <button
           onClick={() => handleSocialLogin("discord")}
           className="flex items-center justify-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded p-2 transition"
         >
           <FaDiscord size={20} />
-          <span>Continue with Discord</span>
+          <span>Login/Signup with Discord</span>
         </button>
       </div>
     </div>

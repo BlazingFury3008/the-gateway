@@ -4,18 +4,31 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useTheme } from "@/app/theme-provider";
 
+type HeroImage = {
+  src: string;
+  scaleMobile: number;
+  scaleDesktop: number;
+  translateYMobile: string;
+  translateYDesktop: string;
+  darkInvert?: boolean;
+};
+
 export default function Hero() {
-  const images = [
+  const images: HeroImage[] = [
     {
       src: "/Hero-Images/Vampire.png",
-      scaleMobile: "scale-100",
-      scaleDesktop: "scale-150",
+      scaleMobile: 1.5,
+      scaleDesktop: 1.4,
+      translateYMobile: "0px",
+      translateYDesktop: "0px",
       darkInvert: false,
     },
     {
       src: "/Hero-Images/Werewolf.png",
-      scaleMobile: "scale-90",
-      scaleDesktop: "scale-120",
+      scaleMobile: 0.5,
+      scaleDesktop: .5,
+      translateYMobile: "0px",
+      translateYDesktop: "0px",
       darkInvert: true,
     },
   ];
@@ -23,7 +36,17 @@ export default function Hero() {
   const intervalTime = 5000;
   const [current, setCurrent] = useState(0);
   const [progressing, setProgressing] = useState(false);
-  const { theme } = useTheme(); // use theme directly from provider
+  const { theme } = useTheme();
+
+  // Track breakpoint in JS (matches Tailwind's sm: 640px)
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    const apply = () => setIsDesktop(mq.matches);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []);
 
   // Auto-advance carousel
   useEffect(() => {
@@ -40,7 +63,6 @@ export default function Hero() {
     return () => clearTimeout(t);
   }, [current]);
 
-  // Smooth scroll helper
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -55,31 +77,51 @@ export default function Hero() {
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
           {images.map((img, idx) => {
-            const invertClass =
-              theme === "dark" && img.darkInvert ? "invert" : "";
+            const shouldInvert = theme === "dark" && img.darkInvert;
+
+            const scale = isDesktop ? img.scaleDesktop : img.scaleMobile;
+            const ty = isDesktop ? img.translateYDesktop : img.translateYMobile;
+
             return (
               <div
                 key={idx}
                 className="relative w-full h-full flex-shrink-0 flex items-center justify-center bg-[var(--background)]"
               >
-                <Image
-                  src={img.src}
-                  alt={`Slide ${idx}`}
-                  fill
-                  className={`object-contain opacity-80 select-none pointer-events-none 
-                    ${img.scaleMobile} sm:${img.scaleDesktop} ${invertClass}`}
-                  priority={idx === 0}
-                />
+                {/* Transform wrapper YOU control (this is the important part) */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    transform: `translateY(${ty}) scale(${scale})`,
+                    transformOrigin: "center",
+                    transition: "transform 500ms ease",
+                    filter: shouldInvert ? "invert(1)" : "none",
+                  }}
+                >
+                  <Image
+                    src={img.src}
+                    alt={`Slide ${idx}`}
+                    fill
+                    priority={idx === 0}
+                    className="object-contain opacity-80 select-none pointer-events-none"
+                  />
+                </div>
               </div>
             );
           })}
         </div>
-        <div className="absolute inset-0 bg-black/40 -z-10" />
+
+        {/* Overlay */}
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            backgroundColor:
+              theme === "dark" ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.40)",
+          }}
+        />
       </div>
 
       {/* Foreground content */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-10 w-full px-4">
-        {/* Buttons */}
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 w-full sm:w-auto">
           <button
             className="hero-button w-full sm:w-auto text-base sm:text-sm py-3 sm:py-1 bg-opacity-80 sm:bg-opacity-100"
@@ -107,7 +149,6 @@ export default function Hero() {
           </button>
         </div>
 
-        {/* Progress indicators */}
         <div className="flex gap-1 sm:gap-2 mt-2 items-center">
           {images.map((_, idx) => {
             const isPast = idx < current;

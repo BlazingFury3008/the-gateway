@@ -143,13 +143,6 @@ button:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
 }
 
-button:focus {
-  outline: none;
-  border-color: var(--primary);
-  border-radius: 6px; /* slight rounded corners */
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35); /* soft glow */
-  padding: 0.25rem; /* adds breathing space */
-}
 /* -- HERO SECTION STYLES -- */
 .hero-button {
   background-color: var(--primary);
