@@ -1,32 +1,60 @@
 "use client";
 
+import Friends from "@/components/user/Friends";
+import Overview from "@/components/user/Overview";
 import Settings from "@/components/user/Settings";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
+import Image from "next/image";
+
+const FLASK_API_BASE =
+  process.env.NEXT_PUBLIC_FLASK_API_BASE ?? "http://localhost:5000";
 
 type TabKey =
   | "overview"
+  | "friends"
   | "messages"
   | "forumPosts"
   | "characters"
   | "homebrew"
   | "settings";
 
+const isTabKey = (v: string | null): v is TabKey => {
+  return (
+    v === "overview" ||
+    v === "friends" ||
+    v === "messages" ||
+    v === "forumPosts" ||
+    v === "characters" ||
+    v === "homebrew" ||
+    v === "settings"
+  );
+};
+
 export default function UserPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
+  const params = useSearchParams();
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
   }, [status, router]);
 
   const user = session?.user;
+  const flaskToken = (session as any)?.accessToken as string | null;
 
   const tabs = useMemo(
     () =>
       [
         { key: "overview", label: "Overview" },
+        { key: "friends", label: "Friends" },
         { key: "messages", label: "Messages" },
         { key: "forumPosts", label: "Forum Posts" },
         { key: "characters", label: "Characters" },
@@ -36,29 +64,36 @@ export default function UserPage() {
     []
   );
 
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  // URL tab (?tab=...)
+  const tabFromUrl = params.get("tab");
+  const derivedTab: TabKey = isTabKey(tabFromUrl) ? tabFromUrl : "overview";
+  const [activeTab, setActiveTab] = useState<TabKey>(derivedTab);
 
-  if (status === "loading") {
-    return (
-      <div className="flex justify-center items-center min-h-[80vh] text-[var(--muted)]">
-        Loading your profile...
-      </div>
-    );
-  }
+  useEffect(() => {
+    setActiveTab(derivedTab);
+  }, [derivedTab]);
 
-  const TabPill = ({
-    tabKey,
-    label,
-  }: {
-    tabKey: TabKey;
-    label: string;
-  }) => {
+  const setTabInUrl = useCallback(
+    (tab: TabKey) => {
+      const sp = new URLSearchParams(params.toString());
+      sp.set("tab", tab);
+      router.replace(`/user?${sp.toString()}`, { scroll: false });
+    },
+    [params, router]
+  );
+
+  const onSelectTab = (tab: TabKey) => {
+    setActiveTab(tab);
+    setTabInUrl(tab);
+  };
+
+  const TabPill = ({ tabKey, label }: { tabKey: TabKey; label: string }) => {
     const isActive = activeTab === tabKey;
 
     return (
       <button
         type="button"
-        onClick={() => setActiveTab(tabKey)}
+        onClick={() => onSelectTab(tabKey)}
         className={[
           "relative px-3 py-2 text-sm rounded-full transition-all whitespace-nowrap",
           "border border-[var(--border)]",
@@ -69,7 +104,6 @@ export default function UserPage() {
         ].join(" ")}
         aria-current={isActive ? "page" : undefined}
       >
-        {/* active indicator */}
         <span
           className={[
             "absolute -bottom-[2px] left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-full transition-opacity",
@@ -88,66 +122,21 @@ export default function UserPage() {
     </div>
   );
 
-  const Divider = () => (
-    <div className="h-px w-full bg-[var(--border)] my-4" />
-  );
+  const Divider = () => <div className="h-px w-full bg-[var(--border)] my-4" />;
 
   const Panel = () => {
     switch (activeTab) {
       case "overview":
         return (
           <PanelShell>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
-                  Profile
-                </p>
-                <h2 className="text-xl font-semibold text-[var(--foreground)] mt-1">
-                  {user?.name || "Unnamed User"}
-                </h2>
-                <p className="text-sm text-[var(--muted)] mt-1">
-                  {user?.email || "—"}
-                </p>
-              </div>
+            <Overview />
+          </PanelShell>
+        );
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="px-3 py-2 text-sm rounded-lg border border-[var(--border)] text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition"
-                >
-                  Edit (soon)
-                </button>
-                <button
-                  type="button"
-                  className="px-3 py-2 text-sm rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition"
-                >
-                  New Character
-                </button>
-              </div>
-            </div>
-
-            <Divider />
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-[var(--border)] p-4">
-                <p className="text-xs text-[var(--muted)]">Messages</p>
-                <p className="text-2xl font-semibold text-[var(--foreground)] mt-1">
-                  —
-                </p>
-              </div>
-              <div className="rounded-xl border border-[var(--border)] p-4">
-                <p className="text-xs text-[var(--muted)]">Forum Posts</p>
-                <p className="text-2xl font-semibold text-[var(--foreground)] mt-1">
-                  —
-                </p>
-              </div>
-              <div className="rounded-xl border border-[var(--border)] p-4">
-                <p className="text-xs text-[var(--muted)]">Characters</p>
-                <p className="text-2xl font-semibold text-[var(--foreground)] mt-1">
-                  —
-                </p>
-              </div>
-            </div>
+      case "friends":
+        return (
+          <PanelShell>
+            <Friends />
           </PanelShell>
         );
 
@@ -275,7 +264,7 @@ export default function UserPage() {
       case "settings":
         return (
           <PanelShell>
-            <Settings/>
+            <Settings />
           </PanelShell>
         );
 
@@ -284,47 +273,201 @@ export default function UserPage() {
     }
   };
 
+  // Avatar display (robust)
+  const [avatarOk, setAvatarOk] = useState(true);
+  const avatarSrc =
+    typeof user?.image === "string" && user.image.trim().length > 0
+      ? user.image
+      : null;
+
+  useEffect(() => {
+    setAvatarOk(true);
+  }, [avatarSrc]);
+
+  // Avatar upload
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState<string | null>(null);
+  const [avatarErr, setAvatarErr] = useState<string | null>(null);
+
+  const pickAvatar = () => {
+    setAvatarMsg(null);
+    setAvatarErr(null);
+
+    if (!flaskToken) {
+      setAvatarErr("Session expired. Please log in again.");
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  async function uploadAvatar(file: File) {
+    setAvatarMsg(null);
+    setAvatarErr(null);
+
+    if (!flaskToken) {
+      setAvatarErr("Session expired. Please log in again.");
+      return;
+    }
+
+    // Basic validation
+    const allowed = ["image/png", "image/jpeg", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      setAvatarErr("Please upload a PNG, JPG, or WEBP image.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarErr("Max file size is 5MB.");
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+
+      const res = await fetch(`${FLASK_API_BASE}/auth/set-image`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${flaskToken}`,
+        },
+        body: fd,
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to upload image.");
+
+      // Ensure avatar rerenders + avoid cached image URL
+      const newUrl = String(data.image || "");
+      setAvatarOk(true);
+
+      // Patch NextAuth session so header & other components update immediately
+      await update({
+        image: newUrl,
+        picture: newUrl, // keep both because some callbacks map picture->image
+        name: data.name,
+        email: data.email,
+        linked_accounts: data.linked_accounts,
+        accessToken: data.accessToken, // if your backend rotates tokens; harmless if same
+      });
+
+      setAvatarMsg("Profile picture updated.");
+    } catch (e: any) {
+      setAvatarErr(e?.message || "Failed to upload image.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
+  const onAvatarFileChange: React.ChangeEventHandler<HTMLInputElement> = async (
+    e
+  ) => {
+    const file = e.target.files?.[0] ?? null;
+    // reset input so selecting the same file again still triggers change
+    e.target.value = "";
+    if (!file) return;
+    await uploadAvatar(file);
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="flex justify-center items-center min-h-[80vh] text-[var(--muted)]">
+        Loading your profile...
+      </div>
+    );
+  }
+
   return (
     <div className="section section-light min-h-screen flex flex-col items-center justify-start py-12 px-4 sm:px-6">
       <div className="w-full max-w-5xl space-y-6">
         {/* Top banner card */}
         <div className="card overflow-hidden">
+          {/* Gradient header ONLY */}
           <div className="relative">
-            {/* subtle header gradient */}
             <div className="h-24 sm:h-28 bg-gradient-to-r from-black/10 via-black/0 to-black/10 dark:from-white/5 dark:via-white/0 dark:to-white/5" />
-            <div className="px-5 sm:px-6 pb-5 -mt-10 sm:-mt-12 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                {user?.image ? (
-                  <img
-                    src={user.image}
-                    alt="Profile avatar"
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-[var(--border)] object-cover bg-[var(--background)]"
-                  />
-                ) : (
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-[var(--border)] flex items-center justify-center text-[var(--muted)] bg-[var(--background)]">
-                    ?
-                  </div>
-                )}
 
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
-                    Account
-                  </p>
-                  <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mt-1">
-                    {user?.name || "Unnamed User"}
-                  </h1>
-                  <p className="text-sm text-[var(--muted)] mt-1">
-                    {user?.email || "—"}
-                  </p>
+            {/* Identity row */}
+            <div className="px-5 sm:px-6 pb-4 -mt-10 sm:-mt-12">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={onAvatarFileChange}
+                  />
+
+                  {/* Clickable avatar */}
+                  <button
+                    type="button"
+                    onClick={pickAvatar}
+                    disabled={avatarUploading || !flaskToken}
+                    className="relative group disabled:opacity-60 disabled:cursor-not-allowed rounded-2xl"
+                    title={
+                      flaskToken
+                        ? "Click to change profile picture"
+                        : "Log in again to change profile picture"
+                    }
+                  >
+                    {avatarSrc && avatarOk ? (
+                      <Image
+                        src={avatarSrc}
+                        alt="Profile avatar"
+                        width={96}
+                        height={96}
+                        unoptimized
+                        onError={() => setAvatarOk(false)}
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-[var(--border)] object-cover bg-[var(--background)]"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-[var(--border)] flex items-center justify-center text-[var(--muted)] bg-[var(--background)]">
+                        ?
+                      </div>
+                    )}
+
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center">
+                      <span className="text-xs text-white opacity-0 group-hover:opacity-100 transition">
+                        {avatarUploading ? "Uploading…" : "Change"}
+                      </span>
+                    </div>
+                  </button>
+
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
+                      Account {user && user.id ? `#${user.id}` : "--"}
+                    </p>
+                    <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mt-1">
+                      {user?.name || "Unnamed User"}
+                    </h1>
+                    <p className="text-sm text-[var(--muted)] mt-1">
+                      {user?.email || "—"}
+                    </p>
+
+                    {(avatarMsg || avatarErr) && (
+                      <p
+                        className={[
+                          "mt-2 text-xs",
+                          avatarErr ? "text-red-600" : "text-[var(--muted)]",
+                        ].join(" ")}
+                      >
+                        {avatarErr ?? avatarMsg}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              {/* tab row */}
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {tabs.map((t) => (
-                  <TabPill key={t.key} tabKey={t.key} label={t.label} />
-                ))}
-              </div>
+          {/* PURE BLACK SECTION: tabs */}
+          <div className="px-5 sm:px-6 pb-5">
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
+              {tabs.map((t) => (
+                <TabPill key={t.key} tabKey={t.key} label={t.label} />
+              ))}
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import TokenRefresher from "./TokenRefresher";
 import Navbar from "@/components/navbar/Navbar";
 import Providers from "./providers";
 import SystemModal from "@/components/SystemModal";
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: setInitialTheme }}
         />
         <Providers>
+          <TokenRefresher />
           <SystemModal />
           <Navbar />
           <main>{children}</main>

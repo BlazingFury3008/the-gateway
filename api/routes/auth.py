@@ -1,17 +1,41 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from models import db, User
+from functools import wraps
+from urllib.parse import urlparse
 import jwt
 import datetime
 import os
+import uuid
+
+# ---------------------------------------------------------
+# Blueprint + config
+# ---------------------------------------------------------
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
-SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "supersecretkey")
 
-from functools import wraps
+SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "supersecretkey")
+PUBLIC_BASE_URL = os.getenv("FLASK_PUBLIC_BASE_URL", "http://localhost:5000")
+ALLOWED_EXT = {"png", "jpg", "jpeg", "webp"}
+
+# ---------------------------------------------------------
+# JWT helpers
+# ---------------------------------------------------------
+
+
+def create_jwt(user_id: str, email: str) -> str:
+    payload = {
+        "id": user_id,  # UUID string
+        "email": email,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=6),
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
 
 def decode_jwt(token: str):
     return jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+
 
 def get_bearer_token():
     auth = request.headers.get("Authorization", "")
@@ -19,12 +43,14 @@ def get_bearer_token():
         return None
     return auth.split(" ", 1)[1].strip()
 
+
 def require_auth(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         token = get_bearer_token()
         if not token:
             return jsonify({"error": "Missing Authorization header"}), 401
+
         try:
             payload = decode_jwt(token)
         except jwt.ExpiredSignatureError:
@@ -32,97 +58,146 @@ def require_auth(f):
         except jwt.InvalidTokenError:
             return jsonify({"error": "Invalid token"}), 401
 
-        user = User.query.get(payload.get("id"))
+        user_id = payload.get("id")
+        if not user_id:
+            return jsonify({"error": "Invalid token payload"}), 401
+
+        user = db.session.get(User, user_id)  # best practice on modern SQLAlchemy
         if not user:
             return jsonify({"error": "User not found"}), 401
 
-        # Attach to request context (simple + effective)
+        # Attach user to request
         request.user = user
         return f(*args, **kwargs)
+
     return wrapper
 
 
 # ---------------------------------------------------------
-# Helper: create JWT
+# Helpers
 # ---------------------------------------------------------
-def create_jwt(user_id, email):
-    payload = {
-        "id": user_id,
-        "email": email,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=6),
-    }
-    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+
+def allowed_file(filename: str) -> bool:
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXT
+
+
+def delete_old_avatar(user: User):
+    if not user.image:
+        return
+
+    path = user.image
+
+    # If it's an absolute URL, strip to path
+    if path.startswith("http://") or path.startswith("https://"):
+        try:
+            path = urlparse(path).path
+        except Exception:
+            return
+
+    # Only delete locally stored avatars
+    if not path.startswith("/static/uploads/avatars/"):
+        return
+
+    avatar_path = os.path.join(current_app.root_path, path.lstrip("/"))
+
+    try:
+        if os.path.exists(avatar_path):
+            os.remove(avatar_path)
+    except Exception as e:
+        current_app.logger.warning(f"Failed to delete avatar: {e}")
+
+
+def auth_response(user: User):
+    token = create_jwt(user.id, user.email)
+    data = user.to_dict()
+    data["accessToken"] = token
+    return jsonify(data), 200
+
+
+def ensure_linked(user: User, provider: str):
+    """Ensure provider exists in linked_accounts (case-insensitive)."""
+    linked = user.linked_accounts or []
+    lower = {x.lower() for x in linked}
+    if provider.lower() not in lower:
+        # Assign a new list object (extra-safe even with MutableList)
+        user.linked_accounts = linked + [provider]
 
 
 # ---------------------------------------------------------
 # SIGNUP (email + password)
 # ---------------------------------------------------------
-@auth_bp.route("/signup", methods=["POST"])
+
+
+@auth_bp.post("/signup")
 def signup():
-    data = request.get_json()
+    data = request.get_json() or {}
     email = data.get("email")
     password = data.get("password")
-    username = data.get("username", email.split("@")[0])
+    username = data.get("username") or (email.split("@")[0] if email else None)
 
     if not email or not password:
         return jsonify({"error": "Missing email or password"}), 400
 
-    existing = User.query.filter_by(email=email).first()
+    if User.query.filter_by(email=email).first():
+        return (
+            jsonify(
+                {
+                    "error": "This email is already registered. Please log in or set a password from your profile."
+                }
+            ),
+            409,
+        )
 
-    if existing:
-        # ❌ Do NOT allow signup when OAuth account exists
-        return jsonify({
-            "error": "This email is already registered. Please log in using that method or add a password from your profile."
-        }), 409
-
-    hashed_pwd = generate_password_hash(password)
     user = User(
         email=email,
-        username=username,
-        password=hashed_pwd,
+        username=username or email.split("@")[0],
+        password=generate_password_hash(password),
         linked_accounts=["credentials"],
     )
     db.session.add(user)
     db.session.commit()
+    db.session.refresh(user)
 
-    token = create_jwt(user.id, user.email)
-    user_data = user.to_dict()
-    user_data["accessToken"] = token
-    return jsonify(user_data), 200
+    return auth_response(user)
 
 
 # ---------------------------------------------------------
 # LOGIN (email + password)
 # ---------------------------------------------------------
-@auth_bp.route("/login", methods=["POST"])
+
+
+@auth_bp.post("/login")
 def login():
-    data = request.get_json()
+    data = request.get_json() or {}
     email = data.get("email")
     password = data.get("password")
 
     user = User.query.filter_by(email=email).first()
     if not user or not user.password:
-        return jsonify({"error": "No password set for this account. Please log in with Discord/Google, then set a password in settings."}), 401
+        return (
+            jsonify(
+                {
+                    "error": "No password set for this account. Please log in using OAuth and set one in settings."
+                }
+            ),
+            401,
+        )
 
     if not check_password_hash(user.password, password):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    token = create_jwt(user.id, user.email)
-    user_data = user.to_dict()
-    user_data["accessToken"] = token
-    return jsonify(user_data), 200
+    return auth_response(user)
 
 
-@auth_bp.route("/set-password", methods=["POST"])
+# ---------------------------------------------------------
+# SET / CHANGE PASSWORD
+# ---------------------------------------------------------
+
+
+@auth_bp.post("/set-password")
 @require_auth
 def set_password():
-    """
-    Set password for an OAuth-only account OR change existing password.
-
-    Request JSON:
-      - new_password (required)
-      - current_password (required only if user already has a password)
-    """
     data = request.get_json() or {}
     new_password = data.get("new_password")
     current_password = data.get("current_password")
@@ -132,47 +207,45 @@ def set_password():
     if not new_password or len(new_password) < 8:
         return jsonify({"error": "Password must be at least 8 characters."}), 400
 
-    already_has_password = bool(user.password)
-
-    # If changing existing password, verify current
-    if already_has_password:
+    if user.password:
         if not current_password:
-            return jsonify({"error": "Current password is required to change your password."}), 400
+            return jsonify({"error": "Current password required."}), 400
         if not check_password_hash(user.password, current_password):
-            return jsonify({"error": "Current password is incorrect."}), 401
+            return jsonify({"error": "Current password incorrect."}), 401
 
     user.password = generate_password_hash(new_password)
-
-    linked = user.linked_accounts or []
-    linked_lower = {str(x).lower() for x in linked}
-    if "credentials" not in linked_lower:
-        linked.append("credentials")
-        user.linked_accounts = linked
+    ensure_linked(user, "credentials")
 
     db.session.commit()
+    db.session.refresh(user)
+    return auth_response(user)
 
-    token = create_jwt(user.id, user.email)
-    user_data = user.to_dict()
-    user_data["accessToken"] = token
-    return jsonify(user_data), 200
+
+@auth_bp.post("/set-username")
+@require_auth
+def set_username():
+    data = request.get_json() or {}
+    username = data.get("username")
+
+    user: User = request.user
+
+    if not username:
+        return jsonify({"error": "No username sent"}), 400
+
+    user.username = username
+    db.session.commit()
+    db.session.refresh(user)
+    return auth_response(user)
 
 
 # ---------------------------------------------------------
-# SYNC USER (OAuth auto-link or conflict return)
+# OAUTH SYNC (NextAuth)
 # ---------------------------------------------------------
-@auth_bp.route("/sync-user", methods=["POST"])
+
+
+@auth_bp.post("/sync-user")
 def sync_user():
-    """
-    Called by NextAuth after OAuth login.
-
-    Behavior:
-      ✔ If account DOES exist (same email)
-         - If provider already linked → Login OK
-         - If provider NOT linked → return 403 (user must manually link)
-
-      ✔ If account does NOT exist → create new OAuth user
-    """
-    data = request.get_json()
+    data = request.get_json() or {}
     email = data.get("email")
     provider = data.get("provider")
     name = data.get("name")
@@ -181,38 +254,35 @@ def sync_user():
     if not email or not provider:
         return jsonify({"error": "Missing email or provider"}), 400
 
+    provider = provider.lower()
+
     user = User.query.filter_by(email=email).first()
 
-    # ------------------------------------------------------------------
-    # CASE 1: Existing user found
-    # ------------------------------------------------------------------
     if user:
         linked = user.linked_accounts or []
 
-        # Provider NOT linked yet → require manual linking (403)
-        if provider not in linked:
-            return jsonify({
-                "error": f"This email is already registered via another login method. "
-                         f"Please log in normally and manually link {provider.capitalize()} "
-                         f"from your profile settings."
-            }), 403
+        # must already be linked, otherwise block (your existing logic)
+        if provider not in {x.lower() for x in linked}:
+            return (
+                jsonify(
+                    {
+                        "error": f"This email is already registered. "
+                        f"Please log in normally and link {provider.capitalize()} from settings."
+                    }
+                ),
+                403,
+            )
 
-        # Provider is linked → update fields if missing and allow login
         if not user.username and name:
             user.username = name
         if not user.image and image:
             user.image = image
 
         db.session.commit()
+        db.session.refresh(user)
+        return auth_response(user)
 
-        token = create_jwt(user.id, user.email)
-        user_data = user.to_dict()
-        user_data["accessToken"] = token
-        return jsonify(user_data), 200
-
-    # ------------------------------------------------------------------
-    # CASE 2: No account exists → create new OAuth user
-    # ------------------------------------------------------------------
+    # Create new OAuth user
     user = User(
         email=email,
         username=name or email.split("@")[0],
@@ -221,23 +291,19 @@ def sync_user():
     )
     db.session.add(user)
     db.session.commit()
+    db.session.refresh(user)
 
-    token = create_jwt(user.id, user.email)
-    user_data = user.to_dict()
-    user_data["accessToken"] = token
-    return jsonify(user_data), 200
+    return auth_response(user)
 
 
 # ---------------------------------------------------------
-# LINK PROVIDER (manual linking, emails may differ)
+# MANUAL PROVIDER LINK
 # ---------------------------------------------------------
-@auth_bp.route("/link-provider", methods=["POST"])
+
+
+@auth_bp.post("/link-provider")
 def link_provider():
-    """
-    Allows linking ANY provider to ANY user,
-    even when emails differ.
-    """
-    data = request.get_json()
+    data = request.get_json() or {}
     user_email = data.get("user_email")
     provider_email = data.get("provider_email")
     provider = data.get("provider")
@@ -245,16 +311,21 @@ def link_provider():
     if not user_email or not provider_email or not provider:
         return jsonify({"error": "Missing fields"}), 400
 
+    provider = provider.lower()
+
     main_user = User.query.filter_by(email=user_email).first()
     if not main_user:
         return jsonify({"error": "Main account not found"}), 404
 
-    # If there is a separate OAuth account, merge them
     oauth_user = User.query.filter_by(email=provider_email).first()
 
     if oauth_user and oauth_user.id != main_user.id:
-        merged = list(set(main_user.linked_accounts + oauth_user.linked_accounts + [provider]))
-        main_user.linked_accounts = merged
+        merged_lower = {x.lower() for x in (main_user.linked_accounts or [])}
+        merged_lower |= {x.lower() for x in (oauth_user.linked_accounts or [])}
+        merged_lower.add(provider)
+
+        # store canonical lowercase providers
+        main_user.linked_accounts = sorted(list(merged_lower))
 
         if oauth_user.image and not main_user.image:
             main_user.image = oauth_user.image
@@ -262,15 +333,47 @@ def link_provider():
             main_user.username = oauth_user.username
 
         db.session.delete(oauth_user)
-        db.session.commit()
     else:
-        linked = main_user.linked_accounts or []
-        if provider not in linked:
-            linked.append(provider)
-            main_user.linked_accounts = linked
-        db.session.commit()
+        ensure_linked(main_user, provider)
 
-    token = create_jwt(main_user.id, main_user.email)
-    user_data = main_user.to_dict()
-    user_data["accessToken"] = token
-    return jsonify(user_data), 200
+    db.session.commit()
+    db.session.refresh(main_user)
+    return auth_response(main_user)
+
+
+# ---------------------------------------------------------
+# PROFILE IMAGE UPLOAD
+# ---------------------------------------------------------
+
+
+@auth_bp.post("/set-image")
+@require_auth
+def set_image():
+    user: User = request.user
+
+    if "image" not in request.files:
+        return jsonify({"error": "Missing file field 'image'"}), 400
+
+    f = request.files["image"]
+    if not f or f.filename == "":
+        return jsonify({"error": "No file selected"}), 400
+
+    if not allowed_file(f.filename):
+        return jsonify({"error": "Invalid file type"}), 400
+
+    # Ensure upload folder exists
+    upload_dir = os.path.join(current_app.root_path, "static", "uploads", "avatars")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    delete_old_avatar(user)
+
+    ext = f.filename.rsplit(".", 1)[1].lower()
+    filename = secure_filename(f"{uuid.uuid4().hex}.{ext}")
+    file_path = os.path.join(upload_dir, filename)
+    f.save(file_path)
+
+    user.image = f"{PUBLIC_BASE_URL}/static/uploads/avatars/{filename}"
+    db.session.commit()
+    db.session.refresh(user)
+
+    return auth_response(user)

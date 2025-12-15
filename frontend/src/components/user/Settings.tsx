@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -27,6 +28,7 @@ export default function TabSettings() {
 
   const hasCredentials = useMemo(() => {
     const linked = ((session as any)?.linked_accounts ?? []) as string[];
+    console.log("linked accounts:", linked);
     return linked.map((p) => p.toLowerCase()).includes("credentials");
   }, [session]);
 
@@ -192,9 +194,10 @@ export default function TabSettings() {
           {err}
         </div>
       )}
+      <div className="h-px w-full bg-[var(--border)] my-4" />
 
       {/* Username */}
-      <section className="rounded-2xl border border-[var(--border)] bg-[var(--background)]/60 backdrop-blur-sm p-5 sm:p-6 space-y-4">
+      <section className="rounded-2xl border border-[var(--border)] bg-[var(--background)]/60 backdrop-blur-sm p-3 space-y-2">
         <div>
           <h3 className="text-base font-semibold text-[var(--foreground)]">
             Username
@@ -204,23 +207,25 @@ export default function TabSettings() {
           </p>
         </div>
 
-        <div>
-          <label className="text-xs text-[var(--muted)]">Username</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
-          />
-        </div>
+        <div className="flex items-end gap-3">
+          {/* Input */}
+          <div className="flex-1">
+            <label className="text-xs text-[var(--muted)]">Username</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="h-[50px] w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
+            />
+          </div>
 
-        <div className="flex justify-end">
+          {/* Button */}
           <button
             onClick={saveUsername}
             disabled={usernameSaving || !username.trim()}
-            className="rounded-lg bg-[var(--primary)] px-4 py-2.5 text-sm text-[var(--primary-foreground)] disabled:opacity-50"
+            className="h-[50px] rounded-lg bg-[var(--primary)] px-4 text-sm text-[var(--primary-foreground)] disabled:opacity-50"
           >
-            {usernameSaving ? "Saving..." : "Save username"}
+            {usernameSaving ? "Saving..." : "Save"}
           </button>
         </div>
       </section>
