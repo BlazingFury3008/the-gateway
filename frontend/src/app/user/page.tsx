@@ -13,6 +13,11 @@ import React, {
   useRef,
 } from "react";
 import Image from "next/image";
+import Forums from "@/components/user/Forums";
+import Characters from "@/components/user/Characters";
+import Messages from "@/components/user/Messages";
+import Homebrew from "@/components/user/Homebrew";
+import Wikis from "@/components/user/Wikis";
 
 const FLASK_API_BASE =
   process.env.NEXT_PUBLIC_FLASK_API_BASE ?? "http://localhost:5000";
@@ -24,6 +29,7 @@ type TabKey =
   | "forumPosts"
   | "characters"
   | "homebrew"
+  | "wiki"
   | "settings";
 
 const isTabKey = (v: string | null): v is TabKey => {
@@ -34,6 +40,7 @@ const isTabKey = (v: string | null): v is TabKey => {
     v === "forumPosts" ||
     v === "characters" ||
     v === "homebrew" ||
+    v === "wiki" ||
     v === "settings"
   );
 };
@@ -59,6 +66,7 @@ export default function UserPage() {
         { key: "forumPosts", label: "Forum Posts" },
         { key: "characters", label: "Characters" },
         { key: "homebrew", label: "Homebrew" },
+        { key: "wiki", label: "Wiki" },
         { key: "settings", label: "Settings/Options" },
       ] as const,
     []
@@ -117,12 +125,10 @@ export default function UserPage() {
   };
 
   const PanelShell = ({ children }: { children: React.ReactNode }) => (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)]/60 backdrop-blur-sm p-5 sm:p-6">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--navbar)]/60 backdrop-blur-sm p-5 sm:p-6">
       {children}
     </div>
   );
-
-  const Divider = () => <div className="h-px w-full bg-[var(--border)] my-4" />;
 
   const Panel = () => {
     switch (activeTab) {
@@ -143,121 +149,28 @@ export default function UserPage() {
       case "messages":
         return (
           <PanelShell>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
-                  Inbox
-                </p>
-                <h2 className="text-xl font-semibold text-[var(--foreground)] mt-1">
-                  Messages
-                </h2>
-                <p className="text-sm text-[var(--muted)] mt-1">
-                  Coming soon: conversations, notifications, and replies.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="px-3 py-2 text-sm rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition"
-              >
-                New Message
-              </button>
-            </div>
-
-            <Divider />
-
-            <div className="rounded-xl border border-[var(--border)] p-4 text-sm text-[var(--muted)]">
-              No messages to show yet.
-            </div>
+            <Messages />
           </PanelShell>
         );
 
       case "forumPosts":
         return (
           <PanelShell>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
-                Activity
-              </p>
-              <h2 className="text-xl font-semibold text-[var(--foreground)] mt-1">
-                Forum Posts
-              </h2>
-              <p className="text-sm text-[var(--muted)] mt-1">
-                Coming soon: your threads, replies, and bookmarks.
-              </p>
-            </div>
-
-            <Divider />
-
-            <div className="rounded-xl border border-[var(--border)] p-4 text-sm text-[var(--muted)]">
-              Nothing here yet.
-            </div>
+            <Forums />
           </PanelShell>
         );
 
       case "characters":
         return (
           <PanelShell>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
-                  Library
-                </p>
-                <h2 className="text-xl font-semibold text-[var(--foreground)] mt-1">
-                  Characters
-                </h2>
-                <p className="text-sm text-[var(--muted)] mt-1">
-                  Coming soon: browse, create, and manage your characters.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="px-3 py-2 text-sm rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition"
-              >
-                Create
-              </button>
-            </div>
-
-            <Divider />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-xl border border-[var(--border)] p-4 text-sm text-[var(--muted)]">
-                No characters yet.
-              </div>
-              <div className="rounded-xl border border-[var(--border)] p-4 text-sm text-[var(--muted)]">
-                Drafts will appear here.
-              </div>
-            </div>
+            <Characters />
           </PanelShell>
         );
 
       case "homebrew":
         return (
           <PanelShell>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
-                  Workshop
-                </p>
-                <h2 className="text-xl font-semibold text-[var(--foreground)] mt-1">
-                  Homebrew
-                </h2>
-                <p className="text-sm text-[var(--muted)] mt-1">
-                  Coming soon: create and publish homebrew content.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="px-3 py-2 text-sm rounded-lg border border-[var(--border)] text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition"
-              >
-                New (soon)
-              </button>
-            </div>
-
-            <Divider />
-
-            <div className="rounded-xl border border-[var(--border)] p-4 text-sm text-[var(--muted)]">
-              No homebrew yet.
-            </div>
+            <Homebrew />
           </PanelShell>
         );
 
@@ -265,6 +178,12 @@ export default function UserPage() {
         return (
           <PanelShell>
             <Settings />
+          </PanelShell>
+        );
+      case "wiki":
+        return (
+          <PanelShell>
+            <Wikis />
           </PanelShell>
         );
 
@@ -369,6 +288,30 @@ export default function UserPage() {
     await uploadAvatar(file);
   };
 
+  const msgTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // clear any existing timer
+    if (msgTimerRef.current !== null) {
+      window.clearTimeout(msgTimerRef.current);
+      msgTimerRef.current = null;
+    }
+
+    // start timer only when message is non-null
+    if (avatarMsg !== null) {
+      msgTimerRef.current = window.setTimeout(() => {
+        setAvatarMsg(null);
+      }, 5000);
+    }
+
+    return () => {
+      if (msgTimerRef.current !== null) {
+        window.clearTimeout(msgTimerRef.current);
+        msgTimerRef.current = null;
+      }
+    };
+  }, [avatarMsg]);
+
   if (status === "loading") {
     return (
       <div className="flex justify-center items-center min-h-[80vh] text-[var(--muted)]">
@@ -419,7 +362,7 @@ export default function UserPage() {
                         height={96}
                         unoptimized
                         onError={() => setAvatarOk(false)}
-                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-[var(--border)] object-cover bg-[var(--background)]"
+                        className="w-24 h-24 sm:w-24 sm:h-24 rounded-2xl border border-[var(--border)] object-cover bg-[var(--background)]"
                       />
                     ) : (
                       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-[var(--border)] flex items-center justify-center text-[var(--muted)] bg-[var(--background)]">
@@ -446,16 +389,18 @@ export default function UserPage() {
                       {user?.email || "—"}
                     </p>
 
-                    {(avatarMsg || avatarErr) && (
+<div className="h-12">
+                      {(avatarMsg || avatarErr) && (
                       <p
                         className={[
-                          "mt-2 text-xs",
+                          "text-xs",
                           avatarErr ? "text-red-600" : "text-[var(--muted)]",
                         ].join(" ")}
                       >
                         {avatarErr ?? avatarMsg}
                       </p>
                     )}
+</div>
                   </div>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useTheme } from "@/app/theme-provider";
 
@@ -13,30 +13,61 @@ type HeroImage = {
   darkInvert?: boolean;
 };
 
+function readDomTheme(): "light" | "dark" {
+  if (typeof document === "undefined") return "light";
+  const t = document.documentElement.getAttribute("data-theme");
+  return t === "dark" ? "dark" : "light";
+}
+
 export default function Hero() {
-  const images: HeroImage[] = [
-    {
-      src: "/Hero-Images/Vampire.png",
-      scaleMobile: 1.5,
-      scaleDesktop: 1.4,
-      translateYMobile: "0px",
-      translateYDesktop: "0px",
-      darkInvert: false,
-    },
-    {
-      src: "/Hero-Images/Werewolf.png",
-      scaleMobile: 0.5,
-      scaleDesktop: .5,
-      translateYMobile: "0px",
-      translateYDesktop: "0px",
-      darkInvert: true,
-    },
-  ];
+  const images: HeroImage[] = useMemo(
+    () => [
+      {
+        src: "/Hero-Images/Vampire.png",
+        scaleMobile: 1.5,
+        scaleDesktop: 1.4,
+        translateYMobile: "0px",
+        translateYDesktop: "0px",
+        darkInvert: false,
+      },
+      {
+        src: "/Hero-Images/Werewolf.png",
+        scaleMobile: 0.5,
+        scaleDesktop: 0.5,
+        translateYMobile: "0px",
+        translateYDesktop: "0px",
+        darkInvert: true,
+      },
+    ],
+    []
+  );
 
   const intervalTime = 5000;
   const [current, setCurrent] = useState(0);
   const [progressing, setProgressing] = useState(false);
+
+  // Context theme (may lag on initial hydration)
   const { theme } = useTheme();
+
+  // ✅ DOM theme (correct immediately if your <head> script sets data-theme)
+  const [domTheme, setDomTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    // read once on mount
+    setDomTheme(readDomTheme());
+
+    // keep in sync if something else updates data-theme
+    const obs = new MutationObserver(() => setDomTheme(readDomTheme()));
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => obs.disconnect();
+  }, []);
+
+  // Prefer DOM theme if available; fall back to context
+  const effectiveTheme = domTheme ?? theme;
 
   // Track breakpoint in JS (matches Tailwind's sm: 640px)
   const [isDesktop, setIsDesktop] = useState(false);
@@ -77,7 +108,7 @@ export default function Hero() {
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
           {images.map((img, idx) => {
-            const shouldInvert = theme === "dark" && img.darkInvert;
+            const shouldInvert = effectiveTheme === "dark" && img.darkInvert;
 
             const scale = isDesktop ? img.scaleDesktop : img.scaleMobile;
             const ty = isDesktop ? img.translateYDesktop : img.translateYMobile;
@@ -87,14 +118,16 @@ export default function Hero() {
                 key={idx}
                 className="relative w-full h-full flex-shrink-0 flex items-center justify-center bg-[var(--background)]"
               >
-                {/* Transform wrapper YOU control (this is the important part) */}
                 <div
                   className="absolute inset-0"
                   style={{
                     transform: `translateY(${ty}) scale(${scale})`,
                     transformOrigin: "center",
                     transition: "transform 500ms ease",
-                    filter: shouldInvert ? "invert(1)" : "none",
+                    // ✅ add tiny contrast/brightness so invert is visible under overlay
+                    filter: shouldInvert
+                      ? "invert(1) brightness(1.05) contrast(1.05)"
+                      : "none",
                   }}
                 >
                   <Image
@@ -115,7 +148,9 @@ export default function Hero() {
           className="absolute inset-0 -z-10"
           style={{
             backgroundColor:
-              theme === "dark" ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.40)",
+              effectiveTheme === "dark"
+                ? "rgba(0,0,0,0.35)"
+                : "rgba(0,0,0,0.40)",
           }}
         />
       </div>

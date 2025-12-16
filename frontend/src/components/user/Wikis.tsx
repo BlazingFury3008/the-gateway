@@ -1,19 +1,19 @@
 import React from "react";
 import Divider from "../components/Divider";
 
-export default function Messages() {
+export default function Wikis() {
   return (
     <>
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
-            Inbox
+            Worldbuilding
           </p>
           <h2 className="text-xl font-semibold text-[var(--foreground)] mt-1">
-            Messages
+            Wiki
           </h2>
           <p className="text-sm text-[var(--muted)] mt-1">
-            Coming soon: conversations, notifications and replies
+            Coming soon: browse, create, and manage your custom Wiki
           </p>
         </div>
         <button
@@ -27,9 +27,12 @@ export default function Messages() {
 
       <Divider />
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="rounded-xl border border-[var(--border)] p-4 text-sm text-[var(--muted)]">
-          No messages to show yet.
+          No Wiki yet.
+        </div>
+        <div className="rounded-xl border border-[var(--border)] p-4 text-sm text-[var(--muted)]">
+          Pages will appear here.
         </div>
       </div>
     </>
