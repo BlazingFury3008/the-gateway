@@ -3,6 +3,7 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from models import db
 from routes.auth import auth_bp
+from routes.data import data_bp
 
 def create_app():
     app = Flask(__name__)
@@ -19,6 +20,7 @@ def create_app():
 
     # Register routes
     app.register_blueprint(auth_bp)
+    app.register_blueprint(data_bp)
 
     @app.route("/")
     def index():

@@ -16,7 +16,10 @@ import uuid
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "supersecretkey")
+
+# Kept for backwards compatibility in your codebase:
 PUBLIC_BASE_URL = os.getenv("FLASK_PUBLIC_BASE_URL", "http://localhost:5000")
+
 ALLOWED_EXT = {"png", "jpg", "jpeg", "webp"}
 
 # ---------------------------------------------------------
@@ -108,13 +111,6 @@ def delete_old_avatar(user: User):
         current_app.logger.warning(f"Failed to delete avatar: {e}")
 
 
-def auth_response(user: User):
-    token = create_jwt(user.id, user.email)
-    data = user.to_dict()
-    data["accessToken"] = token
-    return jsonify(data), 200
-
-
 def ensure_linked(user: User, provider: str):
     """Ensure provider exists in linked_accounts (case-insensitive)."""
     linked = user.linked_accounts or []
@@ -122,6 +118,40 @@ def ensure_linked(user: User, provider: str):
     if provider.lower() not in lower:
         # Assign a new list object (extra-safe even with MutableList)
         user.linked_accounts = linked + [provider]
+
+
+def public_image_url(image_value: str | None) -> str | None:
+    """
+    Return an absolute URL for locally-stored avatar paths at response time,
+    without changing what's stored in the DB.
+
+    - If image_value is already absolute (OAuth/CDN), return as-is.
+    - If image_value is a relative path like /static/..., prefix with FLASK_BACKEND_API (preferred)
+      or FLASK_PUBLIC_BASE_URL as fallback.
+    """
+    if not image_value:
+        return None
+
+    if image_value.startswith("http://") or image_value.startswith("https://"):
+        return image_value
+
+    base = (PUBLIC_BASE_URL or PUBLIC_BASE_URL or "").rstrip("/")
+    if not base:
+        return image_value
+
+    path = image_value if image_value.startswith("/") else f"/{image_value}"
+    return f"{base}{path}"
+
+
+def auth_response(user: User):
+    token = create_jwt(user.id, user.email)
+    data = user.to_dict()
+
+    # Only modify the outgoing payload (do NOT write back to DB)
+    data["image"] = public_image_url(data.get("image"))
+    data["accessToken"] = token
+    
+    return jsonify(data), 200
 
 
 # ---------------------------------------------------------
@@ -372,7 +402,8 @@ def set_image():
     file_path = os.path.join(upload_dir, filename)
     f.save(file_path)
 
-    user.image = f"{PUBLIC_BASE_URL}/static/uploads/avatars/{filename}"
+    # Store as a RELATIVE path so base URL can change later without reupload
+    user.image = f"/static/uploads/avatars/{filename}"
     db.session.commit()
     db.session.refresh(user)
 
