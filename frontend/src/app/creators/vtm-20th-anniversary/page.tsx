@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaPlus, FaSearch, FaSkull } from "react-icons/fa";
+import { FaSearch, FaCog } from "react-icons/fa";
 
 type V20Character = {
   id: string;
@@ -10,15 +10,22 @@ type V20Character = {
   clan: string;
   concept?: string;
   chronicle?: string;
-  lastUpdated?: string; // ISO or display string
+  sect?: string;
+  nature?: string;
+  demeanor?: string;
+  generation?: string; // e.g. "10th"
+  lastUpdated?: string; // display or ISO-ish
   isExample: boolean;
-  portraitUrl?: string; // "/images/..." or remote URL
+  portraitUrl?: string;
+  bannerUrl?: string;
 };
 
 function useAuth() {
   // Replace with your real auth/session hook
   return { isSignedIn: true };
 }
+
+type SortKey = "nameAsc" | "updatedDesc" | "clanAsc";
 
 export default function V20CharactersPage() {
   const router = useRouter();
@@ -32,9 +39,14 @@ export default function V20CharactersPage() {
       clan: "Toreador",
       concept: "Decadent Artist",
       chronicle: "The Gateway",
+      sect: "Camarilla",
+      nature: "Bon Vivant",
+      demeanor: "Gallant",
+      generation: "11th",
       lastUpdated: "2025-12-12",
       isExample: false,
       portraitUrl: "/images/portraits/lucien.png",
+      bannerUrl: "/images/banners/vtm-1.jpg",
     },
     {
       id: "2",
@@ -42,9 +54,14 @@ export default function V20CharactersPage() {
       clan: "Tremere",
       concept: "Occult Scholar",
       chronicle: "NOLA Chantry",
+      sect: "Camarilla",
+      nature: "Architect",
+      demeanor: "Pedant",
+      generation: "10th",
       lastUpdated: "2025-12-01",
       isExample: false,
       portraitUrl: "/images/portraits/mirela.png",
+      bannerUrl: "/images/banners/vtm-2.jpg",
     },
     {
       id: "ex-1",
@@ -52,193 +69,238 @@ export default function V20CharactersPage() {
       clan: "Ventrue",
       concept: "Corporate Tyrant",
       chronicle: "Example",
+      sect: "Camarilla",
+      nature: "Director",
+      demeanor: "Judge",
+      generation: "9th",
       lastUpdated: "2025-10-20",
       isExample: true,
       portraitUrl: "/images/portraits/sebastian.png",
+      bannerUrl: "/images/banners/vtm-3.jpg",
     },
   ];
 
   const [query, setQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("updatedDesc");
 
-  const { userCharacters, exampleCharacters } = useMemo(() => {
+  const characters = useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    const filtered = !q
+    let filtered = !q
       ? allCharacters
       : allCharacters.filter((c) => {
-          const hay = `${c.name} ${c.clan} ${c.concept ?? ""} ${
-            c.chronicle ?? ""
-          }`.toLowerCase();
+          const hay = [
+            c.name,
+            c.clan,
+            c.concept ?? "",
+            c.chronicle ?? "",
+            c.sect ?? "",
+            c.nature ?? "",
+            c.demeanor ?? "",
+            c.generation ?? "",
+            c.isExample ? "example" : "",
+          ]
+            .join(" ")
+            .toLowerCase();
+
           return hay.includes(q);
         });
 
-    return {
-      userCharacters: filtered.filter((c) => !c.isExample),
-      exampleCharacters: filtered.filter((c) => c.isExample),
-    };
-  }, [query, allCharacters]);
+    filtered = [...filtered].sort((a, b) => {
+      if (sortKey === "nameAsc") return a.name.localeCompare(b.name);
+      if (sortKey === "clanAsc") return a.clan.localeCompare(b.clan);
+      // updatedDesc default
+      return (b.lastUpdated ?? "").localeCompare(a.lastUpdated ?? "");
+    });
+
+    return filtered;
+  }, [query, sortKey, allCharacters]);
 
   const openCharacter = (id: string) =>
     router.push(`/creators/vtm-20th-anniversary/character/${id}`);
 
   return (
-    <div className="section section-light">
-      <div className="mx-auto w-full max-w-5xl">
+    <div className="section section-light characters-shell">
+      <div className="characters-wrap">
         {/* Header */}
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Vampire: The Masquerade 20th Anniversary
-          </h1>
-          <p className="mt-2 text-sm text-[var(--muted)]">Characters library</p>
+        <div className="characters-header">
+          <div>
+            <h1 className="characters-title">
+              Vampire: The Masquerade 20th Anniversary
+            </h1>
+
+            <div className="characters-subline">
+              <span>Characters:</span>
+              <a href="#">75/Unlimited</a>
+            </div>
+          </div>
+
+          <div className="characters-actions">
+            {isSignedIn && (
+              <button
+                className="hero-button"
+                onClick={() =>
+                  router.push("/creators/vtm-20th-anniversary/create")
+                }
+              >
+                CREATE A CHARACTER
+              </button>
+            )}
+
+            <a className="characters-download" href="#">
+              ↓ Download a blank character sheet
+            </a>
+          </div>
         </div>
 
-        {/* Actions row */}
-        <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
-          {isSignedIn && (
-            <button
-              className="hero-button"
-              onClick={() =>
-                router.push("/creators/vtm-20th-anniversary/create")
-              }
-            >
-              <FaPlus className="mr-2" />
-              Create Character
-            </button>
-          )}
+        {/* Controls */}
+        <div className="characters-controls">
+          <div className="characters-controls-row">
+            <div className="characters-search">
+              <div className="search-wrap">
+                <FaSearch className="search-icon" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search by Name, Clan, Sect, Chronicle, Concept..."
+                />
+              </div>
+            </div>
 
-          <div className="w-full sm:w-[420px]">
-            <div className="relative">
-              <FaSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name, clan, chronicle..."
-                className="pl-9"
-              />
+            <div className="characters-sort">
+              <label>Sort By</label>
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+              >
+                <option value="updatedDesc">Updated: Newest</option>
+                <option value="nameAsc">Name: A to Z</option>
+                <option value="clanAsc">Clan: A to Z</option>
+              </select>
+
+              <button
+                type="button"
+                className="characters-settings"
+                onClick={() => console.log("Settings")}
+              >
+                <FaCog />
+                Settings
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Your Characters */}
-        {isSignedIn && (
-          <LibrarySection
-            title="Your Characters"
-            subtitle="Your saved V20 sheets"
-            characters={userCharacters}
-            emptyText="No characters yet. Create one to get started."
-            onOpen={openCharacter}
-          />
-        )}
-
-        {/* Example Characters */}
-        <div className={isSignedIn ? "mt-12" : ""}>
-          <LibrarySection
-            title="Example Characters"
-            subtitle="Read-only sheets you can view for reference"
-            characters={exampleCharacters}
-            emptyText="No example characters available."
-            onOpen={openCharacter}
-          />
+        {/* Grid */}
+        <div className="character-grid">
+          {characters.map((c) => (
+            <CharacterTile
+              key={c.id}
+              character={c}
+              onView={() => openCharacter(c.id)}
+              onEdit={() =>
+                router.push(
+                  `/creators/vtm-20th-anniversary/character/${c.id}/edit`
+                )
+              }
+              onCopy={() => console.log("Copy", c.id)}
+              onDelete={() => console.log("Delete", c.id)}
+            />
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-function LibrarySection({
-  title,
-  subtitle,
-  characters,
-  emptyText,
-  onOpen,
-}: {
-  title: string;
-  subtitle?: string;
-  characters: V20Character[];
-  emptyText: string;
-  onOpen: (id: string) => void;
-}) {
-  return (
-    <section>
-      <div className="mb-4">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="section-title m-0 border-0 p-0 text-foreground">
-            {title}
-          </h2>
-          {subtitle && (
-            <div className="text-sm text-[var(--muted)]">{subtitle}</div>
-          )}
-        </div>
-        <div className="mt-3 border-b border-[var(--border)]" />
-      </div>
-
-      {characters.length === 0 ? (
-        <div className="card text-center text-sm text-[var(--muted)]">
-          {emptyText}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {characters.map((c) => (
-            <CharacterRow
-              key={c.id}
-              character={c}
-              onOpen={() => onOpen(c.id)}
-            />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function CharacterRow({
+function CharacterTile({
   character,
-  onOpen,
+  onView,
+  onEdit,
+  onCopy,
+  onDelete,
 }: {
   character: V20Character;
-  onOpen: () => void;
+  onView: () => void;
+  onEdit: () => void;
+  onCopy: () => void;
+  onDelete: () => void;
 }) {
+  const subtitle = useMemo(() => {
+    // Compact, V20-relevant line under the name (still reads like the screenshot)
+    const left = [
+      character.clan,
+      character.sect ? `• ${character.sect}` : null,
+      character.generation ? `• ${character.generation} Gen` : null,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const right = [
+      character.concept ? `— ${character.concept}` : null,
+      character.chronicle ? `• ${character.chronicle}` : null,
+      character.lastUpdated ? `• Updated ${character.lastUpdated}` : null,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return [left, right].filter(Boolean).join(" ");
+  }, [character]);
+
   return (
-    <button
-      onClick={onOpen}
-      className="card w-full text-left"
-    >
-      <div className="flex items-center gap-4  hover:bg-[var(--background)]">
-        {/* Portrait */}
-        <Portrait name={character.name} src={character.portraitUrl} />
-
-        {/* Main info */}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-3">
-            <div className="truncate text-base font-semibold text-foreground">
-              {character.name}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {character.isExample && (
-                <span className="rounded-md border border-[var(--border)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--muted)]">
-                  Example
-                </span>
-              )}
-            </div>
+    <div className="character-tile">
+      <div
+        className="character-banner"
+        style={
+          character.bannerUrl
+            ? { backgroundImage: `url(${character.bannerUrl})` }
+            : undefined
+        }
+      >
+        <div className="character-banner-content">
+          <Portrait name={character.name} src={character.portraitUrl} />
+          <div className="character-meta">
+            <div className="character-name">{character.name}</div>
+            <div className="character-subtitle">{subtitle}</div>
           </div>
 
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--muted)]">
-            <span className="text-foreground/90">{character.clan}</span>
-            {character.concept ? <span>— {character.concept}</span> : null}
-            {character.chronicle ? <span>• {character.chronicle}</span> : null}
-            {character.lastUpdated ? (
-              <span>• Updated {character.lastUpdated}</span>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Right-side cue */}
-        <div className="hidden sm:flex items-center text-[var(--muted)]">
-          <span className="text-sm">Open →</span>
+          {character.isExample ? (
+            <div
+              style={{
+                marginLeft: "auto",
+                fontSize: 12,
+                fontWeight: 800,
+                color: "rgba(255,255,255,0.85)",
+                border: "1px solid rgba(255,255,255,0.25)",
+                borderRadius: 6,
+                padding: "4px 8px",
+                background: "rgba(0,0,0,0.15)",
+              }}
+            >
+              EXAMPLE
+            </div>
+          ) : null}
         </div>
       </div>
-    </button>
+
+      <div className="character-actions">
+        <button className="character-action" onClick={onView} type="button">
+          VIEW
+        </button>
+        <button className="character-action" onClick={onEdit} type="button">
+          EDIT
+        </button>
+        <button className="character-action" onClick={onCopy} type="button">
+          COPY
+        </button>
+        <button
+          className="character-action delete"
+          onClick={onDelete}
+          type="button"
+        >
+          DELETE
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -248,37 +310,19 @@ function Portrait({ name, src }: { name: string; src?: string }) {
     return parts.map((p) => p[0]?.toUpperCase()).join("");
   }, [name]);
 
-  // If you want: swap this <img> for next/image later.
-  // Using <img> keeps it simple with your current global styles.
   return (
-    <div
-      className="relative shrink-0 overflow-hidden rounded-lg border"
-      style={{
-        width: 56,
-        height: 56,
-        borderColor: "var(--border)",
-        background: "var(--navbar)",
-      }}
-    >
+    <div className="character-portrait" aria-label={`${name} portrait`}>
       {src ? (
         <img
           src={src}
           alt={`${name} portrait`}
-          className="h-full w-full object-cover"
           onError={(e) => {
-            // If the image fails, hide it so the fallback shows
             (e.currentTarget as HTMLImageElement).style.display = "none";
           }}
         />
       ) : null}
 
-      {/* Fallback overlay (shows if no src OR img hidden after error) */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="flex items-center gap-2 text-[var(--muted)]">
-          <FaSkull />
-          <span className="text-sm font-semibold">{initials}</span>
-        </div>
-      </div>
+      <div className="character-portrait-fallback">{initials || "?"}</div>
     </div>
   );
 }
