@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import CharacterTile from "./CharacterTile";
+import Divider from "../Divider";
 
 /**
  * Represents a single tile in the library grid.
@@ -77,6 +78,7 @@ export type LibrarySortOption = {
  *
  * You pass in:
  * - a list of items (`items`) already in display shape
+ * - optional example items (`example_items`) shown in a separate section
  * - optional sort options (`sortOptions`)
  * - optional handlers for create/view/edit/copy/delete
  *
@@ -87,6 +89,7 @@ export type LibrarySortOption = {
  *   title="My Characters"
  *   itemLabel="Characters"
  *   items={items}
+ *   example_items={exampleItems}
  *   sortOptions={sortOptions}
  *   defaultSortId="level-desc"
  *   onCreate={() => ...}
@@ -101,8 +104,15 @@ export type CharactersLibraryProps = {
   /** Label used in the count line (e.g. "Characters", "Coteries"). Defaults to `"Items"`. */
   itemLabel?: string;
 
-  /** List of items to display as cards in the grid. */
+  /** List of items to display as cards in the main grid. */
   items: LibraryItem[];
+
+  /**
+   * Optional list of example items (e.g. starter characters, templates).
+   * If provided and non-empty, they are shown in a separate “Example Characters”
+   * section below the main grid.
+   */
+  example_items?: LibraryItem[];
 
   /**
    * Available sort options for the "Sort By" dropdown.
@@ -178,11 +188,13 @@ export type CharactersLibraryProps = {
  * - Header with title, item count, and optional create/download actions
  * - Search input that filters items by name/subtitle/searchText
  * - Optional "Sort By" dropdown driven by `sortOptions`
- * - Responsive grid of `CharacterTile` cards with VIEW / EDIT / COPY / DELETE buttons
+ * - Main grid of `CharacterTile` cards with VIEW / EDIT / COPY / DELETE
+ * - Optional second grid for example items (e.g. sample characters)
  *
  * @param props.title             Heading text at the top of the page.
  * @param props.itemLabel         Label used before the count (e.g. "Characters").
- * @param props.items             List of items to render as tiles.
+ * @param props.items             List of items to render in the main grid.
+ * @param props.example_items     List of example items to render in a separate section.
  * @param props.sortOptions       Available sort modes for the dropdown.
  * @param props.defaultSortId     ID of the initially selected sort option.
  * @param props.searchPlaceholder Placeholder text for the search field.
@@ -201,6 +213,7 @@ export default function CharactersLibrary({
   title,
   itemLabel = "Items",
   items,
+  example_items,
   sortOptions,
   defaultSortId,
   searchPlaceholder = "Search…",
@@ -232,8 +245,7 @@ export default function CharactersLibrary({
       if (!q) return true;
 
       const baseText =
-        item.searchText ??
-        `${item.name} ${item.subtitle}`.toLowerCase();
+        item.searchText ?? `${item.name} ${item.subtitle}`.toLowerCase();
 
       return baseText.toLowerCase().includes(q);
     });
@@ -326,32 +338,79 @@ export default function CharactersLibrary({
           </div>
         </section>
 
-        {/* Grid */}
-        <section className="character-grid">
-          {filtered.map((item) => (
-            <CharacterTile
-              key={item.id}
-              name={item.name}
-              subtitle={item.subtitle}
-              bannerUrl={item.bannerUrl as string | undefined}
-              portraitUrl={item.portraitUrl as string | undefined}
-              onView={
-                onViewItem ? () => onViewItem(item) : undefined
-              }
-              onEdit={
-                onEditItem ? () => onEditItem(item) : undefined
-              }
-              onCopy={
-                onCopyItem ? () => onCopyItem(item) : undefined
-              }
-              onDelete={
-                onDeleteItem
-                  ? () => onDeleteItem(item)
-                  : undefined
-              }
-            />
-          ))}
+        {/* Main grid */}
+        <section className="character-grid min-h-[150px]">
+          {filtered.length > 0 ? (
+            filtered.map((item) => (
+              <CharacterTile
+                key={item.id}
+                name={item.name}
+                subtitle={item.subtitle}
+                bannerUrl={item.bannerUrl as string | undefined}
+                portraitUrl={item.portraitUrl as string | undefined}
+                onView={onViewItem ? () => onViewItem(item) : undefined}
+                onEdit={onEditItem ? () => onEditItem(item) : undefined}
+                onCopy={onCopyItem ? () => onCopyItem(item) : undefined}
+                onDelete={
+                  onDeleteItem ? () => onDeleteItem(item) : undefined
+                }
+              />
+            ))
+          ) : (
+            <div className="col-span-full flex min-h-[150px] w-full items-center justify-center text-center">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+                No characters found, try adjusting your search
+                {onCreate && (
+                  <>
+                    {"; "}
+                    <button
+                      type="button"
+                      className="underline cursor-pointer uppercase"
+                      onClick={onCreate}
+                    >
+                      or create a new one!
+                    </button>
+                  </>
+                )}
+                .
+              </h2>
+            </div>
+          )}
         </section>
+
+        <Divider />
+
+        {/* Example characters section */}
+        {example_items && example_items.length > 0 && (
+          <section className="mt-6">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+              Example Characters
+            </h2>
+            <div className="character-grid">
+              {example_items.map((item) => (
+                <CharacterTile
+                  key={item.id}
+                  name={item.name}
+                  subtitle={item.subtitle}
+                  bannerUrl={item.bannerUrl as string | undefined}
+                  portraitUrl={item.portraitUrl as string | undefined}
+                  onView={
+                    onViewItem ? () => onViewItem(item) : undefined
+                  }
+                  onEdit={
+                    onEditItem ? () => onEditItem(item) : undefined
+                  }
+                  onCopy={
+                    onCopyItem ? () => onCopyItem(item) : undefined
+                  }
+                  onDelete={
+                    onDeleteItem ? () => onDeleteItem(item) : undefined
+                  }
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
