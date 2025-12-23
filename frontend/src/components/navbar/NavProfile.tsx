@@ -4,12 +4,17 @@ import React, { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FaUser, FaSignOutAlt } from "react-icons/fa";
-import Navbar from "./Navbar";
+import Image from "next/image";
 
-export default function NavProfile({onNavigate}) {
+type NavProfileProps = {
+  onNavigate?: () => void;
+};
+
+export default function NavProfile({ onNavigate }: NavProfileProps) {
   const { data: session, update } = useSession();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const user = session?.user;
@@ -18,11 +23,13 @@ export default function NavProfile({onNavigate}) {
   // Close dropdown when clicking outside (desktop only)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Close dropdown on resize
@@ -33,15 +40,17 @@ export default function NavProfile({onNavigate}) {
   }, []);
 
   const handleProfileClick = () => {
-    // If on mobile, go straight to /user (no dropdown)
+    // Mobile: go straight to /user
     if (window.matchMedia("(max-width: 639px)").matches) {
       router.push("/user");
-      onNavigate();
+      onNavigate?.();
       return;
     }
     // Desktop: toggle dropdown
     setOpen((v) => !v);
   };
+
+  const fallbackLetter = user.name?.[0]?.toUpperCase() || "U";
 
   return (
     <div ref={ref} className="relative">
@@ -51,16 +60,20 @@ export default function NavProfile({onNavigate}) {
         onClick={handleProfileClick}
         className="w-full flex items-center gap-3 px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:bg-[var(--navbar)] transition-all navbar-button"
       >
-        {user.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={user.image}
-            alt="User avatar"
-            className="w-9 h-9 rounded-full border border-[var(--border)] object-cover shrink-0"
-          />
+        {user.image && !imageError ? (
+          <div className="relative w-9 h-9 shrink-0">
+            <Image
+              src={user.image as string}
+              alt="User avatar"
+              fill
+              sizes="36px"
+              className="rounded-full border border-[var(--border)] object-cover"
+              onError={() => setImageError(true)}
+            />
+          </div>
         ) : (
           <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--primary)] text-white font-semibold shrink-0">
-            {user.name ? user.name[0].toUpperCase() : "U"}
+            {fallbackLetter}
           </div>
         )}
 
@@ -69,7 +82,7 @@ export default function NavProfile({onNavigate}) {
         </span>
       </button>
 
-      {/* MOBILE: Sign out button below (only visible on mobile) */}
+      {/* MOBILE: Sign out button */}
       <button
         type="button"
         onClick={async () => {
@@ -83,7 +96,7 @@ export default function NavProfile({onNavigate}) {
         <span>Sign Out</span>
       </button>
 
-      {/* DESKTOP: Dropdown (hidden on mobile) */}
+      {/* DESKTOP: Dropdown */}
       <div
         className={`hidden sm:block absolute right-0 mt-2 w-56 rounded-xl bg-[var(--navbar)] border border-[var(--border)] shadow-lg overflow-hidden transition-all duration-200 z-50 ${
           open
@@ -95,7 +108,9 @@ export default function NavProfile({onNavigate}) {
           <p className="font-semibold text-[var(--foreground)] truncate">
             {user.name || "User"}
           </p>
-          <p className="text-sm text-[var(--muted)] truncate">{user.email}</p>
+          <p className="text-sm text-[var(--muted)] truncate">
+            {user.email}
+          </p>
         </div>
 
         <button

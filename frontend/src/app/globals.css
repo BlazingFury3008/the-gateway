@@ -526,13 +526,13 @@ button:focus {
 
 /* Action row like screenshot */
 .character-actions {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
   border-top: 1px solid var(--border);
   background: var(--navbar);
 }
 
 .character-action {
+  flex: 1 0 0;          /* 1 button = full width, 2 = half each, 3 = third each, etc. */
   height: 44px;
   font-size: 0.9rem;
   font-weight: 800;
