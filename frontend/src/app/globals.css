@@ -111,7 +111,7 @@ body {
 }
 
 /* ---------- FORMS ---------- */
-input {
+input, select {
   width: 100%;
   padding: 10px 12px !important; 
   border: 1px solid var(--border) !important;
@@ -573,28 +573,51 @@ button:focus {
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
   z-index: 50;
+
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: flex-end; /* mobile: sheet slides up */
 }
 
 .sheet-panel {
   width: 100%;
-  max-width: 640px;
+  min-height: 98vh;
+  max-height: 98vh;
+  margin-top: 1vh;
+  margin-bottom: 1vh;
+
   background: var(--navbar);
   border-radius: 1rem 1rem 0 0;
   border-top: 1px solid var(--border);
   box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.35);
+
   padding: 1.5rem 1.25rem 1.75rem;
   animation: sheet-slide-up 0.22s ease-out;
 }
 
+/* DESKTOP — large modal in center */
 @media (min-width: 768px) {
+  .sheet-backdrop {
+    align-items: center; /* center vertically */
+  }
+
   .sheet-panel {
+    width: 80%;          /* 10% margin on left/right */
+    max-height: 90vh;
+    min-height: 70vh;
+
+    margin-top: 5vh;     /* 5% margin top */
+    margin-bottom: 0;
+    margin-left: 10%;
+    margin-right: 10%;
+
+    border-radius: 1.25rem; /* rounded everywhere */
+    border: 1px solid var(--border);
     padding: 2rem 2rem 2.25rem;
-    border-radius: 1.25rem 1.25rem 0 0;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.45);
   }
 }
+
 
 .sheet-panel-header {
   display: flex;

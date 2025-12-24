@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import CharacterTile from "./CharacterTile";
 import Divider from "../Divider";
+import { useSession } from "next-auth/react";
 
 /**
  * Represents a single tile in the library grid.
@@ -228,6 +229,7 @@ export default function CharactersLibrary({
   onCopyItem,
   onDeleteItem,
 }: CharactersLibraryProps) {
+  const {data, status} = useSession()
   const [search, setSearch] = useState("");
   const [sortId, setSortId] = useState<string | undefined>(
     defaultSortId ?? sortOptions?.[0]?.id
@@ -372,7 +374,8 @@ export default function CharactersLibrary({
                     </button>
                   </>
                 )}
-                .
+                . <br />
+                {status != "authenticated" && <span>Characters created will be stored in Local Storage until you log in or create an account</span>}
               </h2>
             </div>
           )}
@@ -397,14 +400,8 @@ export default function CharactersLibrary({
                   onView={
                     onViewItem ? () => onViewItem(item) : undefined
                   }
-                  onEdit={
-                    onEditItem ? () => onEditItem(item) : undefined
-                  }
                   onCopy={
                     onCopyItem ? () => onCopyItem(item) : undefined
-                  }
-                  onDelete={
-                    onDeleteItem ? () => onDeleteItem(item) : undefined
                   }
                 />
               ))}
