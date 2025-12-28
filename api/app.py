@@ -33,4 +33,6 @@ if __name__ == "__main__":
     app = create_app()
     with app.app_context():
         db.create_all()  # creates the tables if they don't exist
+        from seed.seed_v20 import seed_v20
+        seed_v20()
     app.run(host="0.0.0.0", port=5000, debug=True)

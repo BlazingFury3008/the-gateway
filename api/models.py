@@ -52,8 +52,9 @@ class User(db.Model):
             "created_at": self.created_at.isoformat(),
         }
 
+
 # ---------------------------------------------------------
-# Characters (your existing character data, fixed)
+# Characters
 # ---------------------------------------------------------
 class Character(db.Model):
     __tablename__ = "characters"
@@ -89,4 +90,64 @@ class Character(db.Model):
             "user_id": self.user_id,
             "data": self.data,
             "created_at": self.created_at.isoformat(),
+        }
+
+
+# -----------------------------------------------
+# V20 Data
+# -----------------------------------------------
+class V20_Clans(db.Model):
+    __tablename__ = "v20_clans"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    weakness = db.Column(db.Text, nullable=False)
+    information = db.Column(db.Text, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "weakness": self.weakness,
+            "information": self.information,
+        }
+
+
+class V20_Nature(db.Model):
+    __tablename__ = "v20_nature"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "desc": self.description,
+        }
+
+
+class V20_Backgrounds(db.Model):
+    __tablename__ = "v20_backgrounds"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+    # Use Integer here instead of db.Number
+    increments = db.Column(db.Integer, default=1, nullable=False)
+    max_value = db.Column(db.Integer, default=5, nullable=False)
+    cost = db.Column(db.Integer, default=1, nullable=False)
+
+    # Fix: Column, and probably you want Text or String
+    description = db.Column(db.String(200), nullable=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "increments": self.increments,
+            "maximum_value": self.max_value,
+            "cost_mult": self.cost,
+            "description": self.description,
         }

@@ -3,23 +3,64 @@
 import CharactersLibrary from "@/components/components/characterlib/CharacterLibrary";
 import V20_Creator from "@/components/components/characterlib/creators/V20_Creator";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type CharacterItem = {
+  id: string;
+  name: string;
+  subtitle: string;
+};
 
 export default function Page() {
-  const { status } = useSession();
-  const localStorageKey = "V20";
+  const { status, data: session } = useSession();
 
-  const [charData, setCharData] = useState({})
-
+  const [charData, setCharData] = useState<Record<string, any>>({});
   const [showModal, setShowModal] = useState(false);
+  const [allChars, setAllChars] = useState<CharacterItem[]>([]);
+
+  useEffect(() => {
+    // Only fetch once the session is ready and authenticated
+    if (status !== "authenticated" || !session?.user) return;
+
+    const getCharacters = async () => {
+      try {
+        const userId = session.user.id
+        if (userId) {
+
+        const res = await fetch(
+          `/characters?game=V20&user_id=${encodeURIComponent(userId)}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!res.ok) {
+          console.error("Failed to fetch characters:", res.statusText);
+          return;
+        }
+
+        const tmp_data = await res.json();
+        setAllChars(Array.isArray(tmp_data) ? tmp_data : []);
+        }
+
+      } catch (err) {
+        console.error("Error fetching characters:", err);
+      }
+    };
+
+    getCharacters();
+  }, [status, session]);
 
   return (
     <div>
       <CharactersLibrary
-        title={"Vampire: The Masquerade 20th Anniversary"}
+        title="Vampire: The Masquerade 20th Anniversary"
         itemLabel="Characters"
         onCreate={() => setShowModal(true)}
-        items={[]}
+        items={allChars}
         example_items={[
           {
             name: "Aristos",

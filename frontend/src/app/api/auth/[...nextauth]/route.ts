@@ -67,7 +67,9 @@ export const authOptions: NextAuthOptions = {
         // Normalize Flask response → NextAuth "user"
         const id = flaskUser?.id ?? email; // UUID string expected
         const name =
-          flaskUser?.name ?? flaskUser?.username ?? (email ? email.split("@")[0] : null);
+          flaskUser?.name ??
+          flaskUser?.username ??
+          (email ? email.split("@")[0] : null);
 
         return {
           id,
@@ -196,12 +198,18 @@ export const authOptions: NextAuthOptions = {
     /**
      * Expose JWT → session
      * ✅ Put id onto session.user.id
+     * ✅ Also put id on session.id
      */
     async session({ session, token }) {
       session.user = session.user ?? ({} as any);
 
-      (session.user as any).id =
-        (token.sub ?? (token as any).id ?? null) as string | null;
+      const uid = (token.sub ?? (token as any).id ?? null) as string | null;
+
+      // Attach UUID to user
+      (session.user as any).id = uid;
+
+      // Attach UUID to session root as well
+      (session as any).id = uid;
 
       session.user.name = (token.name as string | null) ?? null;
       session.user.email = (token.email as string | null) ?? null;

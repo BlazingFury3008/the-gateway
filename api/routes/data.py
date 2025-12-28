@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify
-from models import db, User, Character
+from models import db, User, Character  # if unused, you can safely remove these
 
 # Optional safety net: loads .env if python-dotenv is installed.
 # This prevents "not configured" when the app doesn't auto-load env files.
@@ -10,18 +10,13 @@ try:
 except Exception:
     pass
 
-# ---------------------------------------------------------
-# Blueprint + config
-# ---------------------------------------------------------
-data_bp = Blueprint("data", __name__, url_prefix="/data")
-
 
 # ---------------------------------------------------------
 # API Key auth
 # ---------------------------------------------------------
 def require_api_key():
     """Return (json, status) if unauthorized, otherwise None."""
-    # ✅ read env at call-time (not import-time)
+    # Read env at call-time (not import-time)
     data_api_key = os.getenv("DATA_API_KEY")
 
     if not data_api_key:
@@ -35,5 +30,19 @@ def require_api_key():
 
 
 # ---------------------------------------------------------
-# Routes
+# Blueprint + config
 # ---------------------------------------------------------
+data_bp = Blueprint("data", __name__, url_prefix="/data")
+
+
+@data_bp.before_request
+def _check_api_key():
+    """Protect all /data/* endpoints with the API key."""
+    auth_error = require_api_key()
+    if auth_error:
+        return auth_error
+
+
+from routes.V20 import v20_bp  
+
+data_bp.register_blueprint(v20_bp)
