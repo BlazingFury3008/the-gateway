@@ -1,5 +1,5 @@
 from app import db
-from models import V20_Clans, V20_Backgrounds, V20_Nature
+from models import V20_Clans, V20_Backgrounds, V20_Nature, V20_Discipline_Powers, V20_Merits, V20_Flaws, V20_Disciplines, V20_Magic_Types, V20_Sorcery_Paths
 
 
 def seed_v20_clan():
@@ -474,7 +474,296 @@ def seed_v20_nature():
         db.session.add(nature)
 
 
+def seed_v20_backgrounds():
+    backgrounds_data = [
+        {
+            "name": "Allies",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "Mortal confederates, usually family or friends",
+        },
+        {
+            "name": "Alternate Identity",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "A false identity, complete with documentation",
+        },
+        {
+            "name": "Black Hand Membership (Sabbat)",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "The number of Black Hand members you can call on",
+        },
+        {
+            "name": "Contacts",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "The information sources the character possesses",
+        },
+        {
+            "name": "Domain",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "Feeding grounds acknowledged by Kindred society",
+        },
+        {
+            "name": "Fame",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "How well-known the character is among mortals",
+        },
+        {
+            "name": "Generation",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "How far removed from Caine the character is",
+        },
+        {
+            "name": "Herd",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "The vessels to which the character has free and safe access",
+        },
+        {
+            "name": "Influence",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "The character's political power within mortal society",
+        },
+        {
+            "name": "Mentor",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "The Kindred patron who advises and supports the character",
+        },
+        {
+            "name": "Resources",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "Wealth, belongings, and income",
+        },
+        {
+            "name": "Retainers",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "Followers, guards, and servants",
+        },
+        {
+            "name": "Rituals (Sabbat)",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "How many ritae the Cainite knows and can perform",
+        },
+        {
+            "name": "Status",
+            "increments": 1,
+            "maximum_value": 5,
+            "cost_mult": 1,
+            "description": "The character's standing in undead society",
+        },
+    ]
+
+    for b in backgrounds_data:
+        existing = V20_Backgrounds.query.filter_by(name=b["name"]).first()
+        if existing:
+            continue
+
+        background = V20_Backgrounds(
+            name=b["name"],
+            increments=b["increments"],
+            max_value=b["maximum_value"],
+            cost=b["cost_mult"],
+            description=b["description"],
+        )
+        db.session.add(background)
+
+
+def seed_magic_types():
+    magic_types_data = [
+        {
+            "name": "Thaumaturgy",
+            "description": "Blood magic practiced by the Tremere and their offshoots.",
+        },
+        {
+            "name": "Necromancy",
+            "description": "The dark art of communing with and commanding the dead.",
+        },
+
+    ]
+
+    for mt in magic_types_data:
+        existing = V20_Magic_Types.query.filter_by(name=mt["name"]).first()
+        if existing:
+            continue
+
+        magic_type = V20_Magic_Types(
+            name=mt["name"],
+            description=mt["description"],
+        )
+        db.session.add(magic_type)
+
+
+def seed_v20_disciplines():
+    discipline_data = [
+        {
+            "name": "Animalism",
+            "description": "Supernatural affinity with and control of animals.",
+        },
+        {
+            "name": "Auspex",
+            "description": "Heightened senses and psychic abilities.",
+        },
+        {
+            "name": "Celerity",
+            "description": "Supernatural speed and reflexes.",
+        },
+        {
+            "name": "Chimerstry",
+            "description": "Illusions and sensory manipulation.",
+        },
+        {
+            "name": "Dementation",
+            "description": "Inducing madness and manipulating minds.",
+        },
+        {
+            "name": "Dominate",
+            "description": "Mind control practiced through the piercing gaze",
+        },
+        {
+            "name": "Fortitude",
+            "description": "Supernatural resilience and toughness.",
+        },
+        {
+            "name": "Necromancy",
+            "description": "The dark art of communing with and commanding the dead.",
+        },
+        {
+            "name": "Obfuscate",
+            "description": "Stealth and concealment abilities.",
+        },
+        {
+            "name": "Obtenebration",
+            "description": "Manipulation of shadows and darkness.",
+        },
+        {
+            "name": "Potence",
+            "description": "Supernatural strength and power.",
+        },
+        {
+            "name": "Presence",
+            "description": "Supernatural charisma and influence over others.",
+        },
+        {
+            "name": "Protean",
+            "description": "Shapeshifting and transformation abilities.",
+        },
+        {
+            "name": "Quietus",
+            "description": "The art of silent death.",
+        },
+        {
+            "name": "Serpentis",
+            "description": "the Disciline of reptilian powers"
+        },
+        {
+            "name": "Thaumaturgy",
+            "description": "The study and practice of blood sorcery.",
+        },
+        {
+            "name": "Vicissitude",
+            "description": "The gruesome art of fleshcrafting.",
+        },
+        {
+            "name": "Dur-An-Ki",
+            "description": "Blood magic practiced by the Ashirra/Assamites.",
+        },
+        {
+            "name": "Daimonion",
+            "description": "Infernal powers granted by pacts with demonic entities.",
+        },
+        {
+            "name": "Obeah",
+            "description": "Healing powers of the Salubri"
+        },
+        {
+            "name": "Valeran",
+            "description": "The powers of the Warrior Salubri",
+        },
+        {
+            "name": "Koldunic Sorcery",
+            "description": "Elemental magic practiced by the Kolduns.",
+        },
+        {
+            "name": "Bardo",
+            "description": "Mystical practices of the Children of Osiris.",
+        },
+        {
+            "name": "Flight",
+            "description": "The power of supernatural flight by the Gargoyals.",
+        },
+        {
+            "name": "Melpominee",
+            "description": "The power of song and sound by the Daughters of Cacophony.",
+        },
+        {
+            "name": "Mythercaria",
+            "description": "The powers of the Kiasyd.",
+        },
+        {
+            "name": "Ogham",
+            "description": "The nature-based magic of the Lhiannan.",
+        },
+        {
+            "name": "Sanguinus",
+            "description": "The blood powers of the Blood Brothers.",
+        },
+        {
+            "name": "Spiritus",
+            "description": "The spirit powers of the Ahrimanes.",
+        },
+        {
+            "name": "Temporis",
+            "description": "The manipulation of time by the True Brujah.",
+        },
+        {
+            "name": "Thanatosis",
+            "description": "The power over death by the Samedi.",
+        },
+        {
+            "name": "Visceratika",
+            "description": "The signiture powers of the Gargoyals.",
+        }
+    ]
+
+    for d in discipline_data:
+        existing = V20_Disciplines.query.filter_by(name=d["name"]).first()
+        if existing:
+            continue
+
+        discipline = V20_Disciplines(
+            name=d["name"],
+            description=d["description"],
+        )
+        db.session.add(discipline)
+
+
 def seed_v20():
+    seed_v20_disciplines()
     seed_v20_clan()
     seed_v20_nature()
+    seed_v20_backgrounds()
+    seed_magic_types()
     db.session.commit()

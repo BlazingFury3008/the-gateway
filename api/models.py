@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.ext.mutable import MutableList
+from sqlalchemy import Enum
 from datetime import datetime
 import os
 import uuid
@@ -113,7 +114,6 @@ class V20_Clans(db.Model):
             "information": self.information,
         }
 
-
 class V20_Nature(db.Model):
     __tablename__ = "v20_nature"
 
@@ -127,7 +127,6 @@ class V20_Nature(db.Model):
             "name": self.name,
             "desc": self.description,
         }
-
 
 class V20_Backgrounds(db.Model):
     __tablename__ = "v20_backgrounds"
@@ -150,5 +149,99 @@ class V20_Backgrounds(db.Model):
             "increments": self.increments,
             "maximum_value": self.max_value,
             "cost_mult": self.cost,
+            "description": self.description,
+        }
+
+class V20_Merits(db.Model):
+    __tablename__ = "v20_merits"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    cost = db.Column(db.Integer, default=1, nullable=False)
+    type = db.Column(Enum("Physical", "Social", "Mental", "Supernatural", name="v20_flaw_enum"), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "cost": self.cost,
+            "type": self.type,
+        }
+    
+class V20_Flaws(db.Model):
+    __tablename__ = "v20_flaws"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    severity = db.Column(db.Integer, default=1, nullable=False)
+    type = db.Column(Enum("Physical", "Social", "Mental", "Supernatural", name="v20_flaw_enum"), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "cost": self.severity,
+            "type": self.type,
+        }
+    
+class V20_Disciplines(db.Model):
+    __tablename__ = "v20_disciplines"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+        }
+    
+class V20_Discipline_Powers(db.Model):
+    __tablename__ = "v20_discipline_powers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    discipline_id = db.Column(db.Integer, db.ForeignKey("v20_disciplines.id"), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    level = db.Column(db.Integer, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+
+    discipline = db.relationship("V20_Disciplines", backref="powers", lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "discipline_id": self.discipline_id,
+            "name": self.name,
+            "level": self.level,
+            "description": self.description,
+        }
+
+class V20_Magic_Types(db.Model):
+    __tablename__ = "v20_magic_types"
+
+    name = db.Column(db.String(100), unique=True, nullable=False, primary_key=True)
+    description = db.Column(db.Text, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+        }
+
+class V20_Sorcery_Paths(db.Model):
+    __tablename__ = "v20_sorcery_paths"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    magic_type = db.Column(db.String(100), db.ForeignKey("v20_magic_types.name"), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
             "description": self.description,
         }

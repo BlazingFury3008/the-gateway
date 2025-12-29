@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from models import V20_Nature, V20_Clans
+from models import V20_Nature, V20_Clans, V20_Backgrounds
 
 v20_bp = Blueprint("V20", __name__, url_prefix="/v20")
 
@@ -56,12 +56,9 @@ def get_flaws():
 # ---------------------------------------------------------
 @v20_bp.route("/backgrounds", methods=["GET"])
 def get_backgrounds():
-    return jsonify([
-        {"id": 1, "name": "Allies", "description": "Mortal helpers"},
-        {"id": 2, "name": "Contacts", "description": "Information network"},
-        {"id": 3, "name": "Resources", "description": "Wealth"},
-    ])
-
+    data = V20_Backgrounds.query.all()
+    payload = [n.to_dict() for n in data]
+    return jsonify(payload)
 
 # ---------------------------------------------------------
 # Archetypes (Nature / Demeanor)
