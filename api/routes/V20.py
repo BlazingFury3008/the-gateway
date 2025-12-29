@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify
+from models import V20_Nature
 
-v20_bp = Blueprint("V20", __name__, url_prefix="/V20")
+v20_bp = Blueprint("V20", __name__, url_prefix="/v20")
 
 
 # ---------------------------------------------------------
@@ -67,10 +68,8 @@ def get_backgrounds():
 # ---------------------------------------------------------
 # Archetypes (Nature / Demeanor)
 # ---------------------------------------------------------
-@v20_bp.route("/archetypes", methods=["GET"])
+@v20_bp.route("/nature", methods=["GET"])
 def get_archetypes():
-    return jsonify([
-        {"name": "Architect", "traits": ["builder", "visionary"]},
-        {"name": "Bon Vivant", "traits": ["hedonist", "pleasure-seeker"]},
-        {"name": "Bravo", "traits": ["bully", "intimidator"]},
-    ])
+    data = V20_Nature.query.all()
+    payload = [n.to_dict() for n in data]
+    return jsonify(payload)

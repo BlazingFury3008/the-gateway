@@ -18,6 +18,7 @@ def require_api_key():
     """Return (json, status) if unauthorized, otherwise None."""
     # Read env at call-time (not import-time)
     data_api_key = os.getenv("DATA_API_KEY")
+    print("api")
 
     if not data_api_key:
         return jsonify({"error": "Server API key not configured"}), 500
@@ -37,10 +38,15 @@ data_bp = Blueprint("data", __name__, url_prefix="/data")
 
 @data_bp.before_request
 def _check_api_key():
-    """Protect all /data/* endpoints with the API key."""
+    # Let CORS preflight pass
+    if request.method == "OPTIONS":
+        return None
+
     auth_error = require_api_key()
     if auth_error:
         return auth_error
+    return None
+
 
 
 from routes.V20 import v20_bp  
