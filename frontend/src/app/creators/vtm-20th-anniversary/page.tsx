@@ -2,6 +2,7 @@
 
 import CharactersLibrary from "@/components/components/characterlib/CharacterLibrary";
 import V20_Creator from "@/components/components/characterlib/creators/V20_Creator";
+import { V20_Character, V20_Data } from "@/components/components/characterlib/DataTypes";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
@@ -14,25 +15,34 @@ type CharacterItem = {
 export default function Page() {
   const { status, data: session } = useSession();
 
-  const [charData, setCharData] = useState<Record<string, any>>({});
+  const [charData, setCharData] = useState<V20_Character>({});
   const [showModal, setShowModal] = useState(false);
   const [allChars, setAllChars] = useState<CharacterItem[]>([]);
+  const [constants, setConstants] = useState<V20_Data>({
+    nature: [],
+  });
+
+  const base = process.env.NEXT_PUBLIC_FLASK_API_BASE ?? "";
 
   useEffect(() => {
-    // Only fetch once the session is ready and authenticated
     if (status !== "authenticated" || !session?.user) return;
+    if (!base) {
+      console.error("NEXT_PUBLIC_FLASK_API_BASE is not set");
+      return;
+    }
 
     const getCharacters = async () => {
       try {
-        const userId = session.user.id
-        if (userId) {
+        const userId = (session.user as { id?: string }).id;
+        if (!userId) return;
 
         const res = await fetch(
-          `/characters?game=V20&user_id=${encodeURIComponent(userId)}`,
+          `${base}/characters?game=V20&user_id=${encodeURIComponent(userId)}`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
+              "X-API-Key": process.env.NEXT_PUBLIC_DATA_API_KEY ?? "",
             },
           }
         );
@@ -42,17 +52,51 @@ export default function Page() {
           return;
         }
 
-        const tmp_data = await res.json();
-        setAllChars(Array.isArray(tmp_data) ? tmp_data : []);
-        }
+        const tmp_data = (await res.json()) as unknown;
 
+        if (Array.isArray(tmp_data)) {
+          setAllChars(tmp_data as CharacterItem[]);
+        } else {
+          setAllChars([]);
+        }
       } catch (err) {
         console.error("Error fetching characters:", err);
       }
     };
 
-    getCharacters();
-  }, [status, session]);
+    void getCharacters();
+  }, [status, session, base]);
+
+  useEffect(() => {
+    if (!base) {
+      console.error("NEXT_PUBLIC_FLASK_API_BASE is not set");
+      return;
+    }
+
+    const fetchConstants = async () => {
+      try {
+        const natures = await fetch(`${base}/data/v20/nature`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": process.env.NEXT_PUBLIC_DATA_API_KEY ?? "",
+          },
+        }).then((res) => res.json());
+
+        console.log("Fetched natures:", natures);
+
+        const tmp = {
+          nature: natures,
+        };
+
+        setConstants(tmp);
+      } catch (err) {
+        console.error("Error fetching constants:", err);
+      }
+    };
+
+    void fetchConstants();
+  }, [base]);
 
   return (
     <div>
@@ -75,15 +119,11 @@ export default function Page() {
       />
 
       {showModal && (
-        <div
-          className="sheet-backdrop"
-          onClick={() => setShowModal(false)}
-        >
+        <div className="sheet-backdrop" onClick={() => setShowModal(false)}>
           <div
             className="sheet-panel flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* HEADER */}
             <div className="sheet-panel-header">
               <h2 className="sheet-panel-title">Create Character</h2>
               <button
@@ -95,10 +135,9 @@ export default function Page() {
               </button>
             </div>
 
-            {/* BODY – this must give height to V20_Creator */}
             <div className="sheet-panel-body flex-1 flex flex-col overflow-hidden">
               <V20_Creator
-                data={{}}
+                data={constants}
                 charData={charData}
                 setCharData={setCharData}
                 onCancel={() => setShowModal(false)}

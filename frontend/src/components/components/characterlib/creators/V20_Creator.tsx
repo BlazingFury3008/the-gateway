@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Divider from "../../Divider";
 import InfoLabel from "../../InfoLabel";
+import { V20_Character, V20_Data } from "../DataTypes";
 
 const PAGE_NAMES = ["Basic Stats", "Attributes", "Abilities"];
 
@@ -10,9 +11,9 @@ export default function V20_Creator({
   setCharData,
   onCancel,
 }: {
-  data: Record<string, unknown>;
-  charData: Record<string, unknown>;
-  setCharData: (d: Record<string, unknown>) => void;
+  data: V20_Data;
+  charData: V20_Character;
+  setCharData: (d: V20_Character) => void;
   onCancel: () => void;
 }) {
   const [page, setPage] = useState<number>(0);
@@ -23,7 +24,10 @@ export default function V20_Creator({
     <div className="flex flex-col h-full">
       {/* MAIN CONTENT (fills space above buttons) */}
       <div className="flex-1 flex flex-col">
-        <p className="mb-3 text-sm">Set up your new character here.</p>
+        <p className="mb-3 text-sm">Set up your new character here, or <span className="underline cursor-pointer" onClick={() => {
+          setCharData({})
+          setPage(0)
+        }}>RESTART</span></p>
 
         <div className="flex-1 overflow-y-auto min-h-[100px] border p-4 rounded-lg">
           <h2 className="text-xl font-bold mb-2">{PAGE_NAMES[page]}</h2>
@@ -55,17 +59,28 @@ export default function V20_Creator({
                   htmlFor="nature"
                   info="Nature is your character's true inner self—their core personality and what truly fulfills them."
                 />
-                <input id="nature" type="text" />
+                <select name="nature" id="nature" value={charData.basic_stats?.nature?.id || data.nature[0].id} onChange={(v) => setCharData({...charData, basic_stats: {...charData.basic_stats, nature: data.nature.find(n => n.id === Number(v.target.value))}})}>
+                  {data.nature?.map((n: {id: number, name: string, desc: string}, i: number) => (
+                    <option key={i} value={n.id}>
+                      {n.name} <span className="italic">({n.desc})</span>
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <InfoLabel
                   label="Demeanor"
                   htmlFor="demeanor"
-                  info="Demeanor is howf your character presents themselves to others, which may or may not match their Nature."
+                  info="Demeanor is how your character presents themselves to others, which may or may not match their Nature."
                 />
-                <input id="demeanor" type="text" />
-              </div>
+                <select name="demeanor" id="demeanor" value={charData.basic_stats?.demeanor?.id || data.nature[0].id} onChange={(v) => setCharData({...charData, basic_stats: {...charData.basic_stats, demeanor: data.nature.find(n => n.id === Number(v.target.value))}})}>
+                  {data.nature?.map((n: {id: number, name: string, desc: string}, i: number) => (
+                    <option key={i} value={n.id}>
+                      {n.name} <span className="italic">({n.desc})</span>
+                    </option>
+                  ))}
+                </select>              </div>
 
               <div>
                 <InfoLabel
@@ -84,19 +99,19 @@ export default function V20_Creator({
                 />
                 <select
                   id="startingGen"
-                  value={charData?.basic_stats?.starting_gen || 13}
+                  value={charData?.basic_stats?.starting_generation || 13}
                   onChange={(v) =>
                     setCharData({
                       ...charData,
                       basic_stats: {
                         ...charData.basic_stats,
-                        starting_gen: Number(v.target.value),
+                        starting_generation: Number(v.target.value),
                       },
                     })
                   }
                 >
-                  {[13, 12, 11, 10, 9, 8, 7, 6, 5, 4].map((v) => {
-                    return <option value={v}>{v}</option>;
+                  {[13, 12, 11, 10, 9, 8, 7, 6, 5, 4].map((v: number, i: number) => {
+                    return <option value={v} key={i}>{v}</option>;
                   })}
                 </select>
               </div>
