@@ -88,7 +88,13 @@ export default function V20_Creator({
                   htmlFor="clan"
                   info="The vampire clan your character belongs to, which determines Disciplines, weaknesses, and social ties."
                 />
-                <input id="clan" type="text" />
+                <select name="clan" id="clan" value={charData.basic_stats?.clan?.id || data.clan[0].id} onChange={(v) => setCharData({...charData, basic_stats: {...charData.basic_stats, clan: data.clan.find(c => c.id === Number(v.target.value))}})}>
+                  {data.clan?.map((c: {id: number, name: string, weakness: string, information: string, reference: string}, i: number) => (
+                    <option key={i} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

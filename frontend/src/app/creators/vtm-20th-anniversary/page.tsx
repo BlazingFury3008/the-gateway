@@ -2,7 +2,12 @@
 
 import CharactersLibrary from "@/components/components/characterlib/CharacterLibrary";
 import V20_Creator from "@/components/components/characterlib/creators/V20_Creator";
-import { V20_Character, V20_Data } from "@/components/components/characterlib/DataTypes";
+import {
+  V20_Character,
+  V20_Data,
+  V20Clan,
+  V20Nature,
+} from "@/components/components/characterlib/DataTypes";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
@@ -15,15 +20,17 @@ type CharacterItem = {
 export default function Page() {
   const { status, data: session } = useSession();
 
-  const [charData, setCharData] = useState<V20_Character>({});
+  const [charData, setCharData] = useState<V20_Character>({} as V20_Character);
   const [showModal, setShowModal] = useState(false);
   const [allChars, setAllChars] = useState<CharacterItem[]>([]);
   const [constants, setConstants] = useState<V20_Data>({
     nature: [],
+    clan: [],
   });
 
   const base = process.env.NEXT_PUBLIC_FLASK_API_BASE ?? "";
 
+  // Fetch characters
   useEffect(() => {
     if (status !== "authenticated" || !session?.user) return;
     if (!base) {
@@ -67,26 +74,47 @@ export default function Page() {
     void getCharacters();
   }, [status, session, base]);
 
+  // Fetch constants (nature, clan, etc.)
   useEffect(() => {
     if (!base) {
       console.error("NEXT_PUBLIC_FLASK_API_BASE is not set");
       return;
     }
 
+    const getHeaders = () => {
+      return {
+        "Content-Type": "application/json",
+        "X-API-Key": process.env.NEXT_PUBLIC_DATA_API_KEY ?? "",
+      };
+    };
+
+    async function fetchJson<T>(url: string): Promise<T> {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: getHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+      }
+      const data = (await response.json()) as T;
+      return data;
+    }
+
     const fetchConstants = async () => {
       try {
-        const natures = await fetch(`${base}/data/v20/nature`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": process.env.NEXT_PUBLIC_DATA_API_KEY ?? "",
-          },
-        }).then((res) => res.json());
+        const resources = [
+          { key: "nature" as const, url: `${base}/data/v20/nature` },
+          { key: "clan" as const, url: `${base}/data/v20/clan` },
+        ];
 
-        console.log("Fetched natures:", natures);
+        const results = await Promise.all([
+          fetchJson<V20Nature[]>(resources[0].url),
+          fetchJson<V20Clan[]>(resources[1].url),
+        ]);
 
-        const tmp = {
-          nature: natures,
+        const tmp: V20_Data = {
+          nature: results[0],
+          clan: results[1],
         };
 
         setConstants(tmp);

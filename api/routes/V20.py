@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from models import V20_Nature
+from models import V20_Nature, V20_Clans
 
 v20_bp = Blueprint("V20", __name__, url_prefix="/v20")
 
@@ -7,13 +7,11 @@ v20_bp = Blueprint("V20", __name__, url_prefix="/v20")
 # ---------------------------------------------------------
 # Clans
 # ---------------------------------------------------------
-@v20_bp.route("/clans", methods=["GET"])
+@v20_bp.route("/clan", methods=["GET"])
 def get_clans():
-    return jsonify([
-        {"id": 1, "name": "Brujah", "bane": "Rageful", "disciplines": ["Celerity", "Potence", "Presence"]},
-        {"id": 2, "name": "Toreador", "bane": "Obsession", "disciplines": ["Auspex", "Celerity", "Presence"]},
-        {"id": 3, "name": "Tremere", "bane": "Blood Bond to Clan", "disciplines": ["Auspex", "Dominate", "Thaumaturgy"]},
-    ])
+    data = V20_Clans.query.all()
+    payload = [n.to_dict() for n in data]
+    return jsonify(payload)
 
 
 # ---------------------------------------------------------

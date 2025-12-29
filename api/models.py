@@ -103,6 +103,7 @@ class V20_Clans(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     weakness = db.Column(db.Text, nullable=False)
     information = db.Column(db.Text, nullable=False)
+    reference = db.Column(db.String(200), nullable=True)
 
     def to_dict(self):
         return {
