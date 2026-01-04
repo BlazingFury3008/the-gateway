@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Divider from "../../Divider";
 import InfoLabel from "../../InfoLabel";
-import { V20_Character, V20_Data } from "../DataTypes";
+import { V20Character, V20Clan, V20Data, V20Nature } from "../DataTypes";
 
 const PAGE_NAMES = ["Basic Stats", "Attributes", "Abilities"];
 
@@ -11,9 +11,9 @@ export default function V20_Creator({
   setCharData,
   onCancel,
 }: {
-  data: V20_Data;
-  charData: V20_Character;
-  setCharData: (d: V20_Character) => void;
+  data: V20Data;
+  charData: V20Character;
+  setCharData: (d: V20Character) => void;
   onCancel: () => void;
 }) {
   const [page, setPage] = useState<number>(0);
@@ -21,20 +21,28 @@ export default function V20_Creator({
 
   return (
     // takes full height given by parent
-    <div className="flex flex-col h-full">
-      {/* MAIN CONTENT (fills space above buttons) */}
-      <div className="flex-1 flex flex-col">
-        <p className="mb-3 text-sm">Set up your new character here, or <span className="underline cursor-pointer" onClick={() => {
-          setCharData({})
-          setPage(0)
-        }}>RESTART</span></p>
+    <div className="flex flex-col h-full min-h-0">
+      <div className="flex-1 min-h-0 flex flex-col">
+        <p className="mb-3 text-sm">
+          Set up your new character here, or{" "}
+          <span
+            className="underline cursor-pointer"
+            onClick={() => {
+              setCharData({});
+              setPage(0);
+            }}
+          >
+            RESTART
+          </span>
+        </p>
 
         <div className="flex-1 overflow-y-auto min-h-[100px] border p-4 rounded-lg">
           <h2 className="text-xl font-bold mb-2">{PAGE_NAMES[page]}</h2>
           <Divider />
 
           {page === 0 && (
-            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                            <div className="mt-4 grid grid-cols-2 gap-3">
               <div>
                 <InfoLabel
                   label="Name"
@@ -59,10 +67,25 @@ export default function V20_Creator({
                   htmlFor="nature"
                   info="Nature is your character's true inner self—their core personality and what truly fulfills them."
                 />
-                <select name="nature" id="nature" value={charData.basic_stats?.nature?.id || data.nature[0].id} onChange={(v) => setCharData({...charData, basic_stats: {...charData.basic_stats, nature: data.nature.find(n => n.id === Number(v.target.value))}})}>
-                  {data.nature?.map((n: {id: number, name: string, desc: string}, i: number) => (
+                <select
+                  name="nature"
+                  id="nature"
+                  value={charData.basic_stats?.nature?.id || data.nature[0].id}
+                  onChange={(v) =>
+                    setCharData({
+                      ...charData,
+                      basic_stats: {
+                        ...charData.basic_stats,
+                        nature: data.nature.find(
+                          (n) => n.id === Number(v.target.value)
+                        ),
+                      },
+                    })
+                  }
+                >
+                  {data.nature?.map((n: V20Nature, i: number) => (
                     <option key={i} value={n.id}>
-                      {n.name} <span className="italic">({n.desc})</span>
+                      {n.name} ({n.description})
                     </option>
                   ))}
                 </select>
@@ -74,13 +97,31 @@ export default function V20_Creator({
                   htmlFor="demeanor"
                   info="Demeanor is how your character presents themselves to others, which may or may not match their Nature."
                 />
-                <select name="demeanor" id="demeanor" value={charData.basic_stats?.demeanor?.id || data.nature[0].id} onChange={(v) => setCharData({...charData, basic_stats: {...charData.basic_stats, demeanor: data.nature.find(n => n.id === Number(v.target.value))}})}>
-                  {data.nature?.map((n: {id: number, name: string, desc: string}, i: number) => (
+                <select
+                  name="demeanor"
+                  id="demeanor"
+                  value={
+                    charData.basic_stats?.demeanor?.id || data.nature[0].id
+                  }
+                  onChange={(v) =>
+                    setCharData({
+                      ...charData,
+                      basic_stats: {
+                        ...charData.basic_stats,
+                        demeanor: data.nature.find(
+                          (n) => n.id === Number(v.target.value)
+                        ),
+                      },
+                    })
+                  }
+                >
+                  {data.nature?.map((n: V20Nature, i: number) => (
                     <option key={i} value={n.id}>
-                      {n.name} <span className="italic">({n.desc})</span>
+                      {n.name} ({n.description})
                     </option>
                   ))}
-                </select>              </div>
+                </select>{" "}
+              </div>
 
               <div>
                 <InfoLabel
@@ -88,8 +129,23 @@ export default function V20_Creator({
                   htmlFor="clan"
                   info="The vampire clan your character belongs to, which determines Disciplines, weaknesses, and social ties."
                 />
-                <select name="clan" id="clan" value={charData.basic_stats?.clan?.id || data.clan[0].id} onChange={(v) => setCharData({...charData, basic_stats: {...charData.basic_stats, clan: data.clan.find(c => c.id === Number(v.target.value))}})}>
-                  {data.clan?.map((c: {id: number, name: string, weakness: string, information: string, reference: string}, i: number) => (
+                <select
+                  name="clan"
+                  id="clan"
+                  value={charData.basic_stats?.clan?.id || data.clan[0].id}
+                  onChange={(v) =>
+                    setCharData({
+                      ...charData,
+                      basic_stats: {
+                        ...charData.basic_stats,
+                        clan: data.clan.find(
+                          (c) => c.id === Number(v.target.value)
+                        ),
+                      },
+                    })
+                  }
+                >
+                  {data.clan?.map((c: V20Clan, i: number) => (
                     <option key={i} value={c.id}>
                       {c.name}
                     </option>
@@ -116,12 +172,23 @@ export default function V20_Creator({
                     })
                   }
                 >
-                  {[13, 12, 11, 10, 9, 8, 7, 6, 5, 4].map((v: number, i: number) => {
-                    return <option value={v} key={i}>{v}</option>;
-                  })}
+                  {[13, 12, 11, 10, 9, 8, 7, 6, 5, 4].map(
+                    (v: number, i: number) => {
+                      return (
+                        <option value={v} key={i}>
+                          {v}
+                        </option>
+                      );
+                    }
+                  )}
                 </select>
               </div>
             </div>
+                          <Divider />
+                                                    {charData.basic_stats?.clan?.information || data.clan[0].information}{"\n"}
+                          {charData.basic_stats?.clan?.weakness || data.clan[0].weakness}
+              </div>
+
           )}
 
           {/* TODO: render other pages when page === 1 or 2 */}

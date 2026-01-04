@@ -1,12 +1,18 @@
 "use client";
 
+import { fetchData } from "@/app/helper";
 import CharactersLibrary from "@/components/components/characterlib/CharacterLibrary";
 import V20_Creator from "@/components/components/characterlib/creators/V20_Creator";
 import {
-  V20_Character,
-  V20_Data,
+  V20Character,
+  V20Data,
   V20Clan,
   V20Nature,
+  V20Advantage,
+  V20Discipline,
+  V20SorceryPath,
+  V20Background,
+  V20MagicType,
 } from "@/components/components/characterlib/DataTypes";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -20,11 +26,16 @@ type CharacterItem = {
 export default function Page() {
   const { status, data: session } = useSession();
 
-  const [charData, setCharData] = useState<V20_Character>({} as V20_Character);
+  const [charData, setCharData] = useState<V20Character>({} as V20Character);
   const [showModal, setShowModal] = useState(false);
   const [allChars, setAllChars] = useState<CharacterItem[]>([]);
-  const [constants, setConstants] = useState<V20_Data>({
+  const [constants, setConstants] = useState<V20Data>({
     nature: [],
+    merits: [],
+    flaws: [],
+    disciplines: [],
+    sorcery_paths: [],
+    backgrounds: [],
     clan: [],
   });
 
@@ -76,55 +87,41 @@ export default function Page() {
 
   // Fetch constants (nature, clan, etc.)
   useEffect(() => {
-    if (!base) {
-      console.error("NEXT_PUBLIC_FLASK_API_BASE is not set");
-      return;
-    }
+    const loadConstants = async () => {
+      const [
+        clan_data,
+        merit_data,
+        flaw_data,
+        discipline_data,
+        nature_data,
+        sorcery_data,
+        background_data,
+        magic_type,
+      ] = await Promise.all([
+        fetchData<V20Clan[]>("v20/clan"),
+        fetchData<V20Advantage[]>("v20/merit"),
+        fetchData<V20Advantage[]>("v20/flaw"),
+        fetchData<V20Discipline[]>("v20/discipline"),
+        fetchData<V20Nature[]>("v20/nature"),
+        fetchData<V20SorceryPath[]>("v20/sorcery"),
+        fetchData<V20Background[]>("v20/backgrounds"),
+        fetchData<V20MagicType[]>("v20/m_type"),
+      ]);
 
-    const getHeaders = () => {
-      return {
-        "Content-Type": "application/json",
-        "X-API-Key": process.env.NEXT_PUBLIC_DATA_API_KEY ?? "",
-      };
-    };
-
-    async function fetchJson<T>(url: string): Promise<T> {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: getHeaders(),
+      setConstants({
+        nature: nature_data,
+        disciplines: discipline_data,
+        clan: clan_data,
+        merits: merit_data,
+        flaws: flaw_data,
+        sorcery_paths: sorcery_data,
+        backgrounds: background_data,
+        magic_types: magic_type,
       });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
-      }
-      const data = (await response.json()) as T;
-      return data;
-    }
-
-    const fetchConstants = async () => {
-      try {
-        const resources = [
-          { key: "nature" as const, url: `${base}/data/v20/nature` },
-          { key: "clan" as const, url: `${base}/data/v20/clan` },
-        ];
-
-        const results = await Promise.all([
-          fetchJson<V20Nature[]>(resources[0].url),
-          fetchJson<V20Clan[]>(resources[1].url),
-        ]);
-
-        const tmp: V20_Data = {
-          nature: results[0],
-          clan: results[1],
-        };
-
-        setConstants(tmp);
-      } catch (err) {
-        console.error("Error fetching constants:", err);
-      }
     };
 
-    void fetchConstants();
-  }, [base]);
+    loadConstants().catch(console.error);
+  }, []);
 
   return (
     <div>
@@ -149,7 +146,7 @@ export default function Page() {
       {showModal && (
         <div className="sheet-backdrop" onClick={() => setShowModal(false)}>
           <div
-            className="sheet-panel flex flex-col"
+            className="sheet-panel flex flex-col max-h-[90vh] h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sheet-panel-header">
@@ -163,7 +160,7 @@ export default function Page() {
               </button>
             </div>
 
-            <div className="sheet-panel-body flex-1 flex flex-col overflow-hidden">
+            <div className="sheet-panel-body flex-1 min-h-0 flex flex-col overflow-hidden">
               <V20_Creator
                 data={constants}
                 charData={charData}
