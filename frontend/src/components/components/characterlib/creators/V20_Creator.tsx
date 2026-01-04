@@ -36,159 +36,177 @@ export default function V20_Creator({
           </span>
         </p>
 
-        <div className="flex-1 overflow-y-auto min-h-[100px] border p-4 rounded-lg">
+        {/* IMPORTANT: this container must NOT scroll */}
+        <div className="flex-1 min-h-0 border p-4 rounded-lg flex flex-col overflow-hidden">
           <h2 className="text-xl font-bold mb-2">{PAGE_NAMES[page]}</h2>
           <Divider />
 
           {page === 0 && (
-              <div>
-                            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div>
-                <InfoLabel
-                  label="Name"
-                  htmlFor="name"
-                  info="Your character's full name or the name they go by."
-                />
-                <input id="name" type="text" />
-              </div>
+            <div className="flex flex-col min-h-0 overflow-hidden">
+              {/* FORM FIELDS (NOT SCROLLABLE) */}
+              <div className="flex-none overflow-hidden">
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div>
+                    <InfoLabel
+                      label="Name"
+                      htmlFor="name"
+                      info="Your character's full name or the name they go by."
+                    />
+                    <input id="name" type="text" />
+                  </div>
 
-              <div>
-                <InfoLabel
-                  label="Concept"
-                  htmlFor="concept"
-                  info="A short phrase that sums up who your character is (e.g. ‘Brooding Tremere Scholar’)."
-                />
-                <input id="concept" type="text" />
-              </div>
+                  <div>
+                    <InfoLabel
+                      label="Concept"
+                      htmlFor="concept"
+                      info="A short phrase that sums up who your character is (e.g. ‘Brooding Tremere Scholar’)."
+                    />
+                    <input id="concept" type="text" />
+                  </div>
 
-              <div>
-                <InfoLabel
-                  label="Nature"
-                  htmlFor="nature"
-                  info="Nature is your character's true inner self—their core personality and what truly fulfills them."
-                />
-                <select
-                  name="nature"
-                  id="nature"
-                  value={charData.basic_stats?.nature?.id || data.nature[0].id}
-                  onChange={(v) =>
-                    setCharData({
-                      ...charData,
-                      basic_stats: {
-                        ...charData.basic_stats,
-                        nature: data.nature.find(
-                          (n) => n.id === Number(v.target.value)
-                        ),
-                      },
-                    })
-                  }
-                >
-                  {data.nature?.map((n: V20Nature, i: number) => (
-                    <option key={i} value={n.id}>
-                      {n.name} ({n.description})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <InfoLabel
-                  label="Demeanor"
-                  htmlFor="demeanor"
-                  info="Demeanor is how your character presents themselves to others, which may or may not match their Nature."
-                />
-                <select
-                  name="demeanor"
-                  id="demeanor"
-                  value={
-                    charData.basic_stats?.demeanor?.id || data.nature[0].id
-                  }
-                  onChange={(v) =>
-                    setCharData({
-                      ...charData,
-                      basic_stats: {
-                        ...charData.basic_stats,
-                        demeanor: data.nature.find(
-                          (n) => n.id === Number(v.target.value)
-                        ),
-                      },
-                    })
-                  }
-                >
-                  {data.nature?.map((n: V20Nature, i: number) => (
-                    <option key={i} value={n.id}>
-                      {n.name} ({n.description})
-                    </option>
-                  ))}
-                </select>{" "}
-              </div>
-
-              <div>
-                <InfoLabel
-                  label="Clan"
-                  htmlFor="clan"
-                  info="The vampire clan your character belongs to, which determines Disciplines, weaknesses, and social ties."
-                />
-                <select
-                  name="clan"
-                  id="clan"
-                  value={charData.basic_stats?.clan?.id || data.clan[0].id}
-                  onChange={(v) =>
-                    setCharData({
-                      ...charData,
-                      basic_stats: {
-                        ...charData.basic_stats,
-                        clan: data.clan.find(
-                          (c) => c.id === Number(v.target.value)
-                        ),
-                      },
-                    })
-                  }
-                >
-                  {data.clan?.map((c: V20Clan, i: number) => (
-                    <option key={i} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <InfoLabel
-                  label="Starting Generation"
-                  htmlFor="startingGen"
-                  info="The Generation you start play at; This is before the Generation Background is applied, so typically this is 13th Generation; However for high power games, this may change"
-                />
-                <select
-                  id="startingGen"
-                  value={charData?.basic_stats?.starting_generation || 13}
-                  onChange={(v) =>
-                    setCharData({
-                      ...charData,
-                      basic_stats: {
-                        ...charData.basic_stats,
-                        starting_generation: Number(v.target.value),
-                      },
-                    })
-                  }
-                >
-                  {[13, 12, 11, 10, 9, 8, 7, 6, 5, 4].map(
-                    (v: number, i: number) => {
-                      return (
-                        <option value={v} key={i}>
-                          {v}
+                  <div>
+                    <InfoLabel
+                      label="Nature"
+                      htmlFor="nature"
+                      info="Nature is your character's true inner self—their core personality and what truly fulfills them."
+                    />
+                    <select
+                      name="nature"
+                      id="nature"
+                      value={
+                        charData.basic_stats?.nature?.id || data.nature[0].id
+                      }
+                      onChange={(v) =>
+                        setCharData({
+                          ...charData,
+                          basic_stats: {
+                            ...charData.basic_stats,
+                            nature: data.nature.find(
+                              (n) => n.id === Number(v.target.value)
+                            ),
+                          },
+                        })
+                      }
+                    >
+                      {data.nature?.map((n: V20Nature, i: number) => (
+                        <option key={i} value={n.id}>
+                          {n.name} ({n.description})
                         </option>
-                      );
-                    }
-                  )}
-                </select>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <InfoLabel
+                      label="Demeanor"
+                      htmlFor="demeanor"
+                      info="Demeanor is how your character presents themselves to others, which may or may not match their Nature."
+                    />
+                    <select
+                      name="demeanor"
+                      id="demeanor"
+                      value={
+                        charData.basic_stats?.demeanor?.id || data.nature[0].id
+                      }
+                      onChange={(v) =>
+                        setCharData({
+                          ...charData,
+                          basic_stats: {
+                            ...charData.basic_stats,
+                            demeanor: data.nature.find(
+                              (n) => n.id === Number(v.target.value)
+                            ),
+                          },
+                        })
+                      }
+                    >
+                      {data.nature?.map((n: V20Nature, i: number) => (
+                        <option key={i} value={n.id}>
+                          {n.name} ({n.description})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <InfoLabel
+                      label="Clan"
+                      htmlFor="clan"
+                      info="The vampire clan your character belongs to, which determines Disciplines, weaknesses, and social ties."
+                    />
+                    <select
+                      name="clan"
+                      id="clan"
+                      value={charData.basic_stats?.clan?.id || data.clan[0].id}
+                      onChange={(v) =>
+                        setCharData({
+                          ...charData,
+                          basic_stats: {
+                            ...charData.basic_stats,
+                            clan: data.clan.find(
+                              (c) => c.id === Number(v.target.value)
+                            ),
+                          },
+                        })
+                      }
+                    >
+                      {data.clan?.map((c: V20Clan, i: number) => (
+                        <option key={i} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <InfoLabel
+                      label="Starting Generation"
+                      htmlFor="startingGen"
+                      info="The Generation you start play at; This is before the Generation Background is applied, so typically this is 13th Generation; However for high power games, this may change"
+                    />
+                    <select
+                      id="startingGen"
+                      value={charData?.basic_stats?.starting_generation || 13}
+                      onChange={(v) =>
+                        setCharData({
+                          ...charData,
+                          basic_stats: {
+                            ...charData.basic_stats,
+                            starting_generation: Number(v.target.value),
+                          },
+                        })
+                      }
+                    >
+                      {[13, 12, 11, 10, 9, 8, 7, 6, 5, 4].map(
+                        (v: number, i: number) => (
+                          <option value={v} key={i}>
+                            {v}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                <Divider />
+              </div>
+
+              {/* INFO + WEAKNESS (ONLY THIS SCROLLS) */}
+              <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+                <div className="whitespace-pre-wrap text-sm">
+                  {charData.basic_stats?.clan?.information ||
+                    data.clan[0].information}
+                </div>
+
+                <div className="w-[60%] mx-auto">
+                  <Divider />
+                </div>
+
+                <div className="whitespace-pre-wrap text-sm">
+                  {charData.basic_stats?.clan?.weakness || data.clan[0].weakness}
+                </div>
               </div>
             </div>
-                          <Divider />
-                                                    {charData.basic_stats?.clan?.information || data.clan[0].information}{"\n"}
-                          {charData.basic_stats?.clan?.weakness || data.clan[0].weakness}
-              </div>
-
           )}
 
           {/* TODO: render other pages when page === 1 or 2 */}
