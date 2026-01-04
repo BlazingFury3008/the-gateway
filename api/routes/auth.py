@@ -161,6 +161,38 @@ def auth_response(user: User):
 
 @auth_bp.post("/signup")
 def signup():
+    """
+    Sign up with email + password
+    ---
+    tags:
+      - auth
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [email, password]
+          properties:
+            email:
+              type: string
+              example: test@example.com
+            password:
+              type: string
+              example: mypassword123
+            username:
+              type: string
+              example: ataylor
+    responses:
+      200:
+        description: User object + accessToken
+      400:
+        description: Missing email or password
+      409:
+        description: Email already registered
+    """
     data = request.get_json() or {}
     email = data.get("email")
     password = data.get("password")
@@ -199,6 +231,33 @@ def signup():
 
 @auth_bp.post("/login")
 def login():
+    """
+    Log in with email + password
+    ---
+    tags:
+      - auth
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [email, password]
+          properties:
+            email:
+              type: string
+              example: test@example.com
+            password:
+              type: string
+              example: mypassword123
+    responses:
+      200:
+        description: User object + accessToken
+      401:
+        description: Invalid credentials / no password set
+    """
     data = request.get_json() or {}
     email = data.get("email")
     password = data.get("password")
@@ -228,6 +287,37 @@ def login():
 @auth_bp.post("/set-password")
 @require_auth
 def set_password():
+    """
+    Set or change password (requires Bearer token)
+    ---
+    tags:
+      - auth
+    security:
+      - BearerAuth: []
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [new_password]
+          properties:
+            new_password:
+              type: string
+              example: newpassw0rd!
+            current_password:
+              type: string
+              example: oldpassw0rd!
+    responses:
+      200:
+        description: Updated user object + new accessToken
+      400:
+        description: Validation error
+      401:
+        description: Unauthorized / incorrect current password
+    """
     data = request.get_json() or {}
     new_password = data.get("new_password")
     current_password = data.get("current_password")
@@ -379,6 +469,37 @@ def link_provider():
 @auth_bp.post("/set-image")
 @require_auth
 def set_image():
+    """
+    Set or change password (requires Bearer token)
+    ---
+    tags:
+      - auth
+    security:
+      - BearerAuth: []
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [new_password]
+          properties:
+            new_password:
+              type: string
+              example: newpassw0rd!
+            current_password:
+              type: string
+              example: oldpassw0rd!
+    responses:
+      200:
+        description: Updated user object + new accessToken
+      400:
+        description: Validation error
+      401:
+        description: Unauthorized / incorrect current password
+    """
     user: User = request.user
 
     if "image" not in request.files:
