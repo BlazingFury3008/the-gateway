@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from models import V20_Nature, V20_Clans, V20_Backgrounds, V20_Disciplines, V20_Sorcery_Paths, V20_Magic_Types
+from models import V20_Nature, V20_Clans, V20_Backgrounds, V20_Disciplines, V20_Sorcery_Paths, V20_Magic_Types, V20_Advantage
 from sqlalchemy.orm import selectinload
 
 v20_bp = Blueprint("V20", __name__, url_prefix="/v20")
@@ -53,7 +53,7 @@ def get_clans():
 # ---------------------------------------------------------
 # Disciplines
 # ---------------------------------------------------------
-@v20_bp.route("/disciplines", methods=["GET"])
+@v20_bp.route("/discipline", methods=["GET"])
 def get_disciplines():
     """
     Get all V20 disciplines
@@ -69,7 +69,7 @@ def get_disciplines():
                 $ref: '#/definitions/V20_Discipline'
     """
     t = V20_Disciplines.query.all()
-    payload = [x.to_dict for x in t]
+    payload = [x.to_dict() for x in t]
     return jsonify(payload)
 
 
@@ -91,12 +91,9 @@ def get_merits():
             items:
                 $ref: '#/definitions/V20_Advantage'
     """
-    return jsonify([
-        {"id": 1, "name": "True Love", "cost": 1, "type": "Supernatural"},
-        {"id": 2, "name": "Acute Sense", "cost": 2, "type": "Physical"},
-        {"id": 3, "name": "Iron Will", "cost": 3, "type": "Mental"},
-    ])
-
+    t = V20_Advantage.query.filter_by(category="Merit").all()
+    payload = [x.to_dict() for x in t]
+    return jsonify(payload)
 
 # ---------------------------------------------------------
 # Flaws
@@ -116,11 +113,31 @@ def get_flaws():
             items:
                 $ref: '#/definitions/V20_Advantage'
     """
-    return jsonify([
-        {"id": 1, "name": "Nightmares", "severity": 1, "type": "Mental"},
-        {"id": 2, "name": "Short Fuse", "severity": 2, "type": "Personality"},
-        {"id": 3, "name": "Prey Exclusion", "severity": 1, "type": "Behavioral"},
-    ])
+    t = V20_Advantage.query.filter_by(category="Flaw").all()
+    payload = [x.to_dict() for x in t]
+    return jsonify(payload)
+
+# ---------------------------------------------------------
+# Flaws
+# ---------------------------------------------------------
+@v20_bp.route("/advantage", methods=["GET"])
+def get_adv():
+    """
+    Get all V20 advantages
+    ---
+    tags:
+      - v20
+    responses:
+        200:
+            description: List of advantages
+            schema:
+            type: array
+            items:
+                $ref: '#/definitions/V20_Advantage'
+    """
+    t = V20_Advantage.query.all()
+    payload = [x.to_dict() for x in t]
+    return jsonify(payload)
 
 
 # ---------------------------------------------------------
