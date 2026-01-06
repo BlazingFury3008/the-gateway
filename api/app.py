@@ -47,6 +47,7 @@ def create_app():
             "description": "Flask API with Swagger docs",
             "version": "1.0.0",
         },
+        "security": [{"ApiKeyAuth": []}],
         "definitions": {
             "V20_Discipline": {
                 "type": "object",
@@ -117,7 +118,7 @@ def create_app():
                     },
                 },
             },
-            "V20_Advantage" : {
+            "V20_Advantage": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "integer"},
@@ -125,8 +126,8 @@ def create_app():
                     "rating": {"type": "integer"},
                     "description": {"type": "string"},
                     "reference": {"type": "string"},
-                }
-            }
+                },
+            },
         },
         "securityDefinitions": {
             "BearerAuth": {

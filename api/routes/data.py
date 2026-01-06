@@ -42,10 +42,10 @@ def _check_api_key():
     if request.method == "OPTIONS":
         return None
 
-    #auth_error = require_api_key()
-    #if auth_error:
-    #    return auth_error
-    #return None
+    auth_error = require_api_key()
+    if auth_error:
+        return auth_error
+    return None
 
 
 
