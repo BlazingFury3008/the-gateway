@@ -1,8 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useDebugValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Divider from "../../Divider";
 import InfoLabel from "../../InfoLabel";
 import { V20Character, V20Clan, V20Data, V20Nature } from "../DataTypes";
 import { BsCircle, BsCircleFill } from "react-icons/bs";
+import { SearchableDropdown } from "../../SearchableSelect";
 
 const PAGE_NAMES = [
   "Basic Stats",
@@ -10,10 +17,69 @@ const PAGE_NAMES = [
   "Abilities",
   "Specialties",
   "Disciplines",
+  "Virtues",
   "Backgrounds",
   "Freebie Points",
   "Final Overview/Submission",
 ];
+
+function blankCharacter(): V20Character {
+  return {
+    basic_stats: {
+      name: "",
+      concept: "",
+      nature: null,
+      demeanor: null,
+      clan: null,
+      starting_generation: 13,
+    },
+    tier_order: {},
+    Attributes: {
+      Physical: { Dexterity: 1, Strength: 1, Stamina: 1 },
+      Social: { Manipulation: 1, Charisma: 1, Appearance: 1 },
+      Mental: { Perception: 1, Intelligence: 1, Wits: 1 },
+    },
+    Abilities: {
+      Talents: {
+        Alertness: 0,
+        Athletics: 0,
+        Awareness: 0,
+        Brawl: 0,
+        Empathy: 0,
+        Expression: 0,
+        Intimidation: 0,
+        Leadership: 0,
+        Streetwise: 0,
+        Subterfuge: 0,
+      },
+      Skills: {
+        "Animal Ken": 0,
+        Crafts: 0,
+        Drive: 0,
+        Etiquette: 0,
+        Firearms: 0,
+        Larceny: 0,
+        Melee: 0,
+        Performance: 0,
+        Stealth: 0,
+        Survival: 0,
+      },
+      Knowledges: {
+        Academics: 0,
+        Computer: 0,
+        Finance: 0,
+        Investigation: 0,
+        Law: 0,
+        Medicine: 0,
+        Occult: 0,
+        Politics: 0,
+        Science: 0,
+        Technology: 0,
+      },
+    },
+    Specialties: {},
+  };
+}
 
 export default function V20_Creator({
   data,
@@ -32,6 +98,17 @@ export default function V20_Creator({
   // allow child pages to block navigation
   const [canProceed, setCanProceed] = useState(true);
 
+  // ✅ scroll the ACTUAL scrolling container, not the window
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const goToPage = (next: number) => {
+    setPage(next);
+    // next tick after layout, reset scroll
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  };
+
   // ✅ reset gating when not on gated pages
   useEffect(() => {
     if (page === 0) setCanProceed(true);
@@ -43,18 +120,16 @@ export default function V20_Creator({
         <p className="mb-3 text-sm">
           Set up your new character here, or{" "}
           <span
-            className="underline cursor-pointer"
+            className="underline cursor-pointer select-none"
             onClick={() => {
-              setCharData({});
-              setPage(0);
+              setCharData(blankCharacter());
+              goToPage(0);
             }}
           >
             RESTART
           </span>
-          {canProceed ? "AHH" : "NAA"}
         </p>
 
-        {/* IMPORTANT: this container must NOT scroll */}
         <div className="flex-1 min-h-0 border p-4 rounded-lg flex flex-col overflow-hidden">
           <h2 className="text-xl font-bold mb-2">{PAGE_NAMES[page]}</h2>
 
@@ -63,173 +138,14 @@ export default function V20_Creator({
           </div>
 
           {/* ✅ ONLY THIS SCROLLS */}
-          <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+          <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto pr-2">
             {page === 0 && (
-              <div className="flex flex-col min-h-0">
-                {/* FORM FIELDS */}
-                <div className="flex-none">
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div>
-                      <InfoLabel
-                        label="Name"
-                        htmlFor="name"
-                        info="Your character's full name or the name they go by."
-                      />
-                      <input id="name" type="text" />
-                    </div>
-
-                    <div>
-                      <InfoLabel
-                        label="Concept"
-                        htmlFor="concept"
-                        info="A short phrase that sums up who your character is (e.g. ‘Brooding Tremere Scholar’)."
-                      />
-                      <input id="concept" type="text" />
-                    </div>
-
-                    <div>
-                      <InfoLabel
-                        label="Nature"
-                        htmlFor="nature"
-                        info="Nature is your character's true inner self—their core personality and what truly fulfills them."
-                      />
-                      <select
-                        name="nature"
-                        id="nature"
-                        value={
-                          charData.basic_stats?.nature?.id || data.nature[0].id
-                        }
-                        onChange={(v) =>
-                          setCharData({
-                            ...charData,
-                            basic_stats: {
-                              ...charData.basic_stats,
-                              nature: data.nature.find(
-                                (n) => n.id === Number(v.target.value)
-                              ),
-                            },
-                          })
-                        }
-                      >
-                        {data.nature?.map((n: V20Nature, i: number) => (
-                          <option key={i} value={n.id}>
-                            {n.name} ({n.description})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <InfoLabel
-                        label="Demeanor"
-                        htmlFor="demeanor"
-                        info="Demeanor is how your character presents themselves to others, which may or may not match their Nature."
-                      />
-                      <select
-                        name="demeanor"
-                        id="demeanor"
-                        value={
-                          charData.basic_stats?.demeanor?.id ||
-                          data.nature[0].id
-                        }
-                        onChange={(v) =>
-                          setCharData({
-                            ...charData,
-                            basic_stats: {
-                              ...charData.basic_stats,
-                              demeanor: data.nature.find(
-                                (n) => n.id === Number(v.target.value)
-                              ),
-                            },
-                          })
-                        }
-                      >
-                        {data.nature?.map((n: V20Nature, i: number) => (
-                          <option key={i} value={n.id}>
-                            {n.name} ({n.description})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <InfoLabel
-                        label="Clan"
-                        htmlFor="clan"
-                        info="The vampire clan your character belongs to, which determines Disciplines, weaknesses, and social ties."
-                      />
-                      <select
-                        name="clan"
-                        id="clan"
-                        value={
-                          charData.basic_stats?.clan?.id || data.clan[0].id
-                        }
-                        onChange={(v) =>
-                          setCharData({
-                            ...charData,
-                            basic_stats: {
-                              ...charData.basic_stats,
-                              clan: data.clan.find(
-                                (c) => c.id === Number(v.target.value)
-                              ),
-                            },
-                          })
-                        }
-                      >
-                        {data.clan?.map((c: V20Clan, i: number) => (
-                          <option key={i} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <InfoLabel
-                        label="Starting Generation"
-                        htmlFor="startingGen"
-                        info="The Generation you start play at; This is before the Generation Background is applied..."
-                      />
-                      <select
-                        id="startingGen"
-                        value={charData?.basic_stats?.starting_generation || 13}
-                        onChange={(v) =>
-                          setCharData({
-                            ...charData,
-                            basic_stats: {
-                              ...charData.basic_stats,
-                              starting_generation: Number(v.target.value),
-                            },
-                          })
-                        }
-                      >
-                        {[13, 12, 11, 10, 9, 8, 7, 6, 5, 4].map((v, i) => (
-                          <option value={v} key={i}>
-                            {v}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <Divider />
-                </div>
-
-                {/* INFO + WEAKNESS */}
-                <div className="mt-3 whitespace-pre-wrap text-sm">
-                  {charData.basic_stats?.clan?.information ||
-                    data.clan[0].information}
-                </div>
-
-                <div className="w-[60%] mx-auto">
-                  <Divider />
-                </div>
-
-                <div className="whitespace-pre-wrap text-sm">
-                  {charData.basic_stats?.clan?.weakness ||
-                    data.clan[0].weakness}
-                </div>
-              </div>
+              <V20_BasicStats
+                charData={charData}
+                setCharData={setCharData}
+                data={data}
+                setCanProceed={setCanProceed}
+              />
             )}
 
             {page === 1 && (
@@ -300,37 +216,64 @@ export default function V20_Creator({
                 limit={3}
               />
             )}
+
+            {page === 3 && (
+              <V20_Specialties
+                charData={charData}
+                setCharData={setCharData}
+                setCanProceed={setCanProceed}
+              />
+            )}
+
+            {page === 4 && (
+              <V20_Disciplines
+                charData={charData}
+                setCharData={setCharData}
+                data={data}
+              />
+            )}
+            {page === 5 && <div />}
+            {page === 6 && <div />}
+            {page === 7 && <div />}
+            {page === 8 && <div />}
           </div>
         </div>
       </div>
 
       {/* BUTTON ROW – pinned to bottom */}
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-[80%] md:w-full mx-auto">
-        {/* Left group */}
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 w-full">
           <button
             type="button"
             className="navbar_button w-full sm:w-auto"
             disabled={page === 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            onClick={() => goToPage(Math.max(0, page - 1))}
           >
             Prev
           </button>
 
-          <button
-            type="button"
-            className="navbar_button w-full sm:w-auto"
-            disabled={
-              page === maxPageIndex ||
-              ((page === 1 || page === 2) && !canProceed)
-            }
-            onClick={() => setPage((p) => Math.min(maxPageIndex, p + 1))}
-          >
-            Next
-          </button>
+          {page !== PAGE_NAMES.length - 1 ? (
+            <button
+              type="button"
+              className="navbar_button w-full sm:w-auto"
+              disabled={
+                page === maxPageIndex || (!canProceed && page !== maxPageIndex)
+              }
+              onClick={() => goToPage(Math.min(maxPageIndex, page + 1))}
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="navbar_button w-full sm:w-auto"
+              onClick={() => goToPage(Math.min(maxPageIndex, page + 1))}
+            >
+              Submit
+            </button>
+          )}
         </div>
 
-        {/* Right group */}
         <button
           type="button"
           className="navbar_button w-full sm:w-auto"
@@ -343,7 +286,200 @@ export default function V20_Creator({
   );
 }
 
-export function V20_Ability({
+function V20_BasicStats({
+  charData,
+  setCharData,
+  data,
+  setCanProceed,
+}: {
+  charData: V20Character;
+  setCharData: (d: V20Character) => void;
+  data: V20Data;
+  setCanProceed: (d: boolean) => void;
+}) {
+  useEffect(() => {
+    const b = charData.basic_stats;
+    if (!b) return setCanProceed(false);
+
+    setCanProceed(
+      b.name?.trim() !== "" &&
+        b.clan !== null &&
+        b.nature !== null &&
+        b.demeanor !== null &&
+        b.concept?.trim() !== "" &&
+        b.starting_generation !== 0
+    );
+  }, [charData]);
+
+  return (
+    <div className="flex flex-col min-h-0">
+      {/* FORM FIELDS */}
+      <div className="flex-none">
+        <div className="mt-4 grid sm:grid-cols-2 grid-cols-1 gap-3">
+          <div>
+            <InfoLabel
+              label="Name"
+              htmlFor="name"
+              info="Your character's full name or the name they go by."
+            />
+            <input
+              id="name"
+              type="text"
+              value={charData.basic_stats?.name || ""}
+              onChange={(v) => {
+                setCharData({
+                  ...charData,
+                  basic_stats: {
+                    ...charData.basic_stats,
+                    name: v.target.value,
+                  },
+                });
+              }}
+            />
+          </div>
+
+          <div>
+            <InfoLabel
+              label="Concept"
+              htmlFor="concept"
+              info="A short phrase that sums up who your character is (e.g. ‘Brooding Tremere Scholar’)."
+            />
+            <input
+              id="concept"
+              type="text"
+              value={charData.basic_stats?.concept || ""}
+              onChange={(v) => {
+                setCharData({
+                  ...charData,
+                  basic_stats: {
+                    ...charData.basic_stats,
+                    concept: v.target.value,
+                  },
+                });
+              }}
+            />{" "}
+          </div>
+
+          <div>
+            <InfoLabel
+              label="Nature"
+              htmlFor="nature"
+              info="Nature is your character's true inner self—their core personality and what truly fulfills them."
+            />
+            <SearchableDropdown<V20Nature>
+              items={data.nature ?? []}
+              value={charData.basic_stats?.nature ?? null}
+              onChange={(nature) => {
+                setCharData({
+                  ...charData,
+                  basic_stats: {
+                    ...charData.basic_stats,
+                    nature,
+                  },
+                });
+              }}
+              getKey={(c) => c.id}
+              getLabel={(c) => c.name}
+              placeholder="-- Select Nature --"
+            />
+          </div>
+
+          <div>
+            <InfoLabel
+              label="Demeanor"
+              htmlFor="demeanor"
+              info="Demeanor is how your character presents themselves to others, which may or may not match their Nature."
+            />
+            <SearchableDropdown<V20Nature>
+              items={data.nature ?? []}
+              value={charData.basic_stats?.demeanor ?? null}
+              onChange={(demeanor) => {
+                setCharData({
+                  ...charData,
+                  basic_stats: {
+                    ...charData.basic_stats,
+                    demeanor,
+                  },
+                });
+              }}
+              getKey={(c) => c.id}
+              getLabel={(c) => c.name}
+              placeholder="-- Select Demeanor --"
+            />
+          </div>
+
+          <div>
+            <InfoLabel
+              label="Clan"
+              htmlFor="clan"
+              info="The vampire clan your character belongs to, which determines Disciplines, weaknesses, and social ties."
+            />
+            <SearchableDropdown<V20Clan>
+              items={data.clan ?? []}
+              value={charData.basic_stats?.clan ?? null}
+              onChange={(clan) => {
+                setCharData({
+                  ...charData,
+                  basic_stats: {
+                    ...charData.basic_stats,
+                    clan,
+                  },
+                });
+              }}
+              getKey={(c) => c.id}
+              getLabel={(c) => c.name}
+              placeholder="-- Select Clan --"
+            />
+          </div>
+
+          <div>
+            <InfoLabel
+              label="Starting Generation"
+              htmlFor="startingGen"
+              info="The Generation you start play at; This is before the Generation Background is applied..."
+            />
+            <select
+              id="startingGen"
+              value={charData?.basic_stats?.starting_generation || 13}
+              onChange={(v) =>
+                setCharData({
+                  ...charData,
+                  basic_stats: {
+                    ...charData.basic_stats,
+                    starting_generation: Number(v.target.value),
+                  },
+                })
+              }
+            >
+              {[13, 12, 11, 10, 9, 8, 7, 6, 5, 4].map((v, i) => (
+                <option value={v} key={i}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <Divider />
+      </div>
+
+      {/* INFO + WEAKNESS */}
+      <div className="mt-3 whitespace-pre-wrap text-sm text-center">
+        {charData.basic_stats?.clan?.information || "N/A"}
+      </div>
+
+      <div className="w-[60%] mx-auto">
+        <Divider />
+      </div>
+
+      <div className="whitespace-pre-wrap text-sm text-center">
+        {charData.basic_stats?.clan?.weakness || "N/A"}
+      </div>
+    </div>
+  );
+}
+
+function V20_Ability({
   charData,
   setCharData,
   attr_label,
@@ -367,7 +503,8 @@ export function V20_Ability({
   type Tier = "NONE" | "PRIMARY" | "SECONDARY" | "TERTIARY";
   const tierOptions: Tier[] = ["NONE", "PRIMARY", "SECONDARY", "TERTIARY"];
 
-  const [data, setData] = useState<Record<string, number>>({});
+  // data is now: { [CategoryName]: { [StatName]: number } }
+  const [data, setData] = useState<Record<string, Record<string, number>>>({});
 
   // ✅ load saved tier order (per attr_label) if it exists
   const [selectedLabel, setSelectedLabel] = useState<Tier[]>(() => {
@@ -375,50 +512,58 @@ export function V20_Ability({
     const saved = (charData as any)?.tier_order?.[attr_label] as
       | Tier[]
       | undefined;
-
     if (Array.isArray(saved) && saved.length === 3) return saved;
     return ["NONE", "NONE", "NONE"];
   });
 
-  // Load dots from charData
+  // Load dots from charData as nested: [attr_label][head_label][score_label]
   useEffect(() => {
-    const labels = score_label.flat();
-    const tmp: Record<string, number> = {};
-    labels.forEach((label) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const section = (charData as any)?.[attr_label] as
-        | Record<string, number>
-        | undefined;
-      tmp[label] = section?.[label] ?? min_val;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const section = ((charData as any)?.[attr_label] ?? {}) as Record<
+      string,
+      Record<string, number>
+    >;
+
+    const tmp: Record<string, Record<string, number>> = {};
+
+    [0, 1, 2].forEach((i) => {
+      const cat = head_label[i] ?? `Category${i}`;
+      const stats = score_label[i] ?? [];
+      const catObj = (section?.[cat] ?? {}) as Record<string, number>;
+
+      tmp[cat] = {};
+      stats.forEach((stat) => {
+        tmp[cat][stat] = catObj?.[stat] ?? min_val;
+      });
     });
+
     setData(tmp);
-  }, [score_label, charData, attr_label, min_val]);
+  }, [score_label, head_label, charData, attr_label, min_val]);
 
   // ✅ Persist tier order into charData so it survives page changes
   useEffect(() => {
     setCharData({
       ...charData,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tier_order: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...((charData as any)?.tier_order ?? {}),
+        ...(((charData as any)?.tier_order ?? {}) as Record<string, unknown>),
         [attr_label]: selectedLabel,
       },
-    } as any);
-    // intentionally NOT depending on charData to avoid loops
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLabel, attr_label]);
 
   const sumByIndex = useMemo(() => {
     return [0, 1, 2].map((i) => {
+      const cat = head_label[i] ?? `Category${i}`;
       let s = 0;
-      (score_label[i] ?? []).forEach((k) => {
-        const cur = data[k] ?? min_val;
+      (score_label[i] ?? []).forEach((stat) => {
+        const cur = data?.[cat]?.[stat] ?? min_val;
         s += Math.max(0, cur - min_val);
       });
       return s;
     });
-  }, [data, score_label, min_val]);
+  }, [data, score_label, head_label, min_val]);
 
   const maxByIndex = useMemo(() => {
     const tierKey: Record<Exclude<Tier, "NONE">, number> = {
@@ -440,10 +585,9 @@ export function V20_Ability({
   }, [sumByIndex, maxByIndex]);
 
   useEffect(() => {
-    let sum_true: boolean = true;
-
+    let sum_true = true;
     sumByIndex.forEach((val, key) => {
-      if (val != maxByIndex[key]) sum_true = false;
+      if (val !== maxByIndex[key]) sum_true = false;
     });
 
     setCanProceed(
@@ -451,139 +595,170 @@ export function V20_Ability({
         !selectedLabel.includes("NONE") &&
         sum_true
     );
-  }, [overByIndex, setCanProceed, selectedLabel]);
+  }, [overByIndex, setCanProceed, selectedLabel, sumByIndex, maxByIndex]);
 
-  // Persist dots to charData
+  // Persist dots to charData as nested
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const currentSection = ((charData as any)?.[attr_label] ?? {}) as Record<
-      string,
-      number
-    >;
+    const currentSection =
+      (((charData as any)?.[attr_label] ?? {}) as Record<
+        string,
+        Record<string, number>
+      >) ?? {};
 
+    // detect changes
     let changed = false;
-    for (const k of Object.keys(data)) {
-      if (currentSection[k] !== data[k]) {
-        changed = true;
-        break;
+    for (const cat of Object.keys(data)) {
+      const curCat = currentSection[cat] ?? {};
+      const nextCat = data[cat] ?? {};
+      for (const stat of Object.keys(nextCat)) {
+        if (curCat[stat] !== nextCat[stat]) {
+          changed = true;
+          break;
+        }
       }
+      if (changed) break;
     }
     if (!changed) return;
 
+    const mergedSection: Record<string, Record<string, number>> = {
+      ...currentSection,
+    };
+    for (const cat of Object.keys(data)) {
+      mergedSection[cat] = {
+        ...(mergedSection[cat] ?? {}),
+        ...(data[cat] ?? {}),
+      };
+    }
+
     setCharData({
       ...charData,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      [attr_label]: { ...currentSection, ...data },
-    } as any);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+      [attr_label]: mergedSection,
+    });
+  }, [data, attr_label, setCharData, charData]);
 
   return (
     <div>
-      <div className="lg:flex-row flex-col flex justify-between sm:w-[80%] w-[90%] mx-auto">
-        {[0, 1, 2].map((key) => (
-          <div className="w-full" key={key}>
-            <h1
-              className="sheet-panel-title mb-0 text-center cursor-pointer"
-              onClick={() => {
-                setData((prev) => {
-                  const tmp = { ...prev };
-                  (score_label[key] ?? []).forEach((stat) => {
-                    tmp[stat] = min_val;
+      <div className="grid lg:grid-cols-3 grid-cols-1 justify-between sm:w-[80%] w-[90%] mx-auto min-h-0">
+        {[0, 1, 2].map((key) => {
+          const cat = head_label[key] ?? `Category${key}`;
+
+          return (
+            <div className="w-full" key={key}>
+              <h1
+                className="sheet-panel-title mb-0 text-center cursor-pointer"
+                onClick={() => {
+                  // reset all stats in this category
+                  setData((prev) => {
+                    const next = { ...prev };
+                    const nextCat = { ...(next[cat] ?? {}) };
+                    (score_label[key] ?? []).forEach((stat) => {
+                      nextCat[stat] = min_val;
+                    });
+                    next[cat] = nextCat;
+                    return next;
                   });
-                  return tmp;
-                });
 
-                const tmp_label = [...selectedLabel];
-                tmp_label[key] = "NONE";
-                setSelectedLabel(tmp_label);
-              }}
-            >
-              {head_label[key]}
-            </h1>
-
-            <div className="text-center py-2 mx-2">
-              <select
-                className="select-compact max-w-[180px] uppercase"
-                value={selectedLabel[key]}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                  const next = e.target.value as Tier;
+                  // reset tier for this category
                   setSelectedLabel((prev) => {
                     const tmp = [...prev];
-                    tmp[key] = next;
+                    tmp[key] = "NONE";
                     return tmp;
                   });
                 }}
               >
-                {tierOptions.map((l) => (
-                  <option
-                    key={l}
-                    value={l}
-                    disabled={
-                      l !== "NONE" &&
-                      selectedLabel.includes(l) &&
-                      selectedLabel[key] !== l
-                    }
-                  >
-                    {l}
-                  </option>
-                ))}
-              </select>
+                {head_label[key]}
+              </h1>
 
-              <div className="text-sm mt-1">
-                <span className="font-semibold">
-                  {sumByIndex[key]} /{" "}
-                  {Number.isFinite(maxByIndex[key]) ? maxByIndex[key] : "0"}
-                </span>
-
-                {overByIndex[key] > 0 && (
-                  <span className="ml-2 text-red-400">
-                    Over by {overByIndex[key]}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              {score_label[key]?.map((l) => {
-                const current = data[l] ?? min_val;
-
-                return (
-                  <div
-                    key={l}
-                    className="flex items-center justify-between lg:mx-1 mx-auto lg:w-[100%] w-[90%] px-2 lg:border-x"
-                  >
-                    <span
-                      className="lg:flex-4 flex-2 mr-2 cursor-pointer"
-                      onClick={() =>
-                        setData((prev) => ({ ...prev, [l]: min_val }))
+              <div className="text-center py-2 mx-2">
+                <select
+                  className="select-compact max-w-[180px] uppercase"
+                  value={selectedLabel[key]}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    const next = e.target.value as Tier;
+                    setSelectedLabel((prev) => {
+                      const tmp = [...prev];
+                      tmp[key] = next;
+                      return tmp;
+                    });
+                  }}
+                >
+                  {tierOptions.map((l) => (
+                    <option
+                      key={l}
+                      value={l}
+                      disabled={
+                        l !== "NONE" &&
+                        selectedLabel.includes(l) &&
+                        selectedLabel[key] !== l
                       }
                     >
                       {l}
-                    </span>
+                    </option>
+                  ))}
+                </select>
 
-                    <span className="flex-1 flex gap-1">
-                      {[1, 2, 3, 4, 5].map((v) => (
-                        <Attr_Circle
-                          key={v}
-                          isSolid={v <= current}
-                          sum={sumByIndex[key]}
-                          max_val={maxByIndex[key]}
-                          onClick={() =>
-                            setData((prev) => ({ ...prev, [l]: v }))
-                          }
-                          delta={v - current}
-                          target={v}
-                          limit={limit}
-                        />
-                      ))}
+                <div className="text-sm mt-1">
+                  <span className="font-semibold">
+                    {sumByIndex[key]} /{" "}
+                    {Number.isFinite(maxByIndex[key]) ? maxByIndex[key] : "0"}
+                  </span>
+
+                  {overByIndex[key] > 0 && (
+                    <span className="ml-2 text-red-400">
+                      Over by {overByIndex[key]}
                     </span>
-                  </div>
-                );
-              })}
+                  )}
+                </div>
+              </div>
+
+              <div>
+                {score_label[key]?.map((stat) => {
+                  const current = data?.[cat]?.[stat] ?? min_val;
+
+                  return (
+                    <div
+                      key={stat}
+                      className="flex items-center justify-between lg:mx-1 mx-auto lg:w-[100%] w-[90%] px-2 lg:border-x"
+                    >
+                      <span
+                        className="lg:flex-4 flex-2 mr-2 cursor-pointer"
+                        onClick={() =>
+                          setData((prev) => ({
+                            ...prev,
+                            [cat]: { ...(prev[cat] ?? {}), [stat]: min_val },
+                          }))
+                        }
+                      >
+                        {stat}
+                      </span>
+
+                      <span className="flex-1 flex gap-1">
+                        {[1, 2, 3, 4, 5].map((v) => (
+                          <Attr_Circle
+                            key={v}
+                            isSolid={v <= current}
+                            sum={sumByIndex[key]}
+                            max_val={maxByIndex[key]}
+                            onClick={() =>
+                              setData((prev) => ({
+                                ...prev,
+                                [cat]: { ...(prev[cat] ?? {}), [stat]: v },
+                              }))
+                            }
+                            delta={v - current}
+                            target={v}
+                            limit={limit}
+                          />
+                        ))}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="w-[50%] mx-auto">
@@ -646,4 +821,149 @@ function Attr_Circle({
       />
     </div>
   );
+}
+
+function V20_Specialties({
+  charData,
+  setCharData,
+  setCanProceed,
+}: {
+  charData: V20Character;
+  setCharData: (d: V20Character) => void;
+  setCanProceed: (b: boolean) => void;
+}) {
+  const SPECIALITY_LIST = [
+    "Expression",
+    "Performance",
+    "Crafts",
+    "Academics",
+    "Law",
+    "Science",
+    "Technology",
+  ];
+
+  const [traitData, setTraitData] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const allSkills: Record<string, number> = {
+      ...charData.Attributes.Physical,
+      ...charData.Attributes.Social,
+      ...charData.Attributes.Mental,
+      ...charData.Abilities.Talents,
+      ...charData.Abilities.Skills,
+      ...charData.Abilities.Knowledges,
+    };
+
+    setTraitData(allSkills);
+
+    const needsSpecialty = (key: string, val: number) =>
+      val >= 4 || (SPECIALITY_LIST.includes(key) && val > 0);
+
+    // build a cleaned specialties map WITHOUT mutating charData
+    const prevSpec = charData.Specialties ?? {};
+    const nextSpec: Record<string, string> = { ...prevSpec };
+
+    let changed = false;
+
+    for (const [key, val] of Object.entries(allSkills)) {
+      // if trait is 0, specialty should not exist
+      if (val === 0 && nextSpec[key] != null) {
+        delete nextSpec[key];
+        changed = true;
+      }
+    }
+
+    // proceed check: every required key must have non-empty specialty
+    let proceed = true;
+    for (const [key, val] of Object.entries(allSkills)) {
+      if (!needsSpecialty(key, val)) continue;
+
+      const s = nextSpec[key];
+      if (typeof s !== "string" || s.trim() === "") {
+        proceed = false;
+        break;
+      }
+    }
+
+    setCanProceed(proceed);
+
+    // only write back if we actually removed anything
+    if (changed) {
+      setCharData({
+        ...charData,
+        Specialties: nextSpec,
+      });
+    }
+  }, [charData, setCanProceed, setCharData]);
+
+  return (
+    <div>
+      <div className="grid grid-rows-3 grid-cols-2 gap-3 sm:w-[60%] w-[100%] mx-auto sm:grid-cols-3">
+        {Object.keys(traitData).map((key) => {
+          const val = traitData[key] ?? 0;
+          const show = val >= 4 || (SPECIALITY_LIST.includes(key) && val > 0);
+          if (!show) return null;
+
+          return (
+            <div key={key}>
+              <InfoLabel
+                label={`${key}${
+                  SPECIALITY_LIST.includes(key) ? "*" : ""
+                } [${val}]`}
+              />
+              <input
+                type="text"
+                value={charData.Specialties?.[key] ?? ""}
+                onChange={(e) => {
+                  setCharData({
+                    ...charData,
+                    Specialties: {
+                      ...(charData.Specialties ?? {}),
+                      [key]: e.target.value,
+                    },
+                  });
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function V20_Disciplines({
+  charData,
+  setCharData,
+  data,
+}: {
+  charData: V20Character;
+  setCharData: (d: V20Character) => void;
+  data: V20Data;
+}) {
+  if (charData.basic_stats?.clan?.name != "Caitiff") {
+    return (
+      <div>
+        {charData.basic_stats?.clan?.discipline_1 && (
+          <div>{charData.basic_stats?.clan?.discipline_1.name}</div>
+        )}
+        {charData.basic_stats?.clan?.discipline_2 && (
+          <div>{charData.basic_stats?.clan?.discipline_2.name}</div>
+        )}{" "}
+        {charData.basic_stats?.clan?.discipline_3 && (
+          <div>{charData.basic_stats?.clan?.discipline_3.name}</div>
+        )}{" "}
+        {charData.basic_stats?.clan?.discipline_4 && (
+          <div>{charData.basic_stats?.clan?.discipline_4.name}</div>
+        )}
+      </div>
+    );
+  }
+  else {
+    return (
+      <div>
+        CAITIFF
+      </div>
+    )
+  }
 }

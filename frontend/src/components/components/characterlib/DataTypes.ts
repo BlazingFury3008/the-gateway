@@ -116,7 +116,63 @@ export interface V20BasicStats {
 
 export interface V20Character {
   basic_stats?: V20BasicStats;
-}
+  tier_order?: object
+  Attributes: {
+    Physical: {
+      Dexterity: number
+      Strength: number
+      Stamina: number
+    },
+    Social: {
+      Manipulation : number
+      Charisma: number
+      Appearance: number
+    },
+    Mental: {
+      Perception: number
+      Intelligence: number
+      Wits : number
+    }
+  }
+  Abilities: {
+    Talents: {
+        Alertness: number,
+        Athletics: number,
+        Awareness: number,
+        Brawl: number,
+        Empathy: number,
+        Expression: number,
+        Intimidation: number,
+        Leadership: number,
+        Streetwise: number,
+        Subterfuge: number,
+    }
+    Skills: {
+        "Animal Ken": number,
+        Crafts: number,
+        Drive: number,
+        Etiquette: number,
+        Firearms: number,
+        Larceny: number,
+        Melee: number,
+        Performance: number,
+        Stealth: number,
+        Survival: number,
+    },
+    Knowledges: {
+        Academics: number,
+        Computer: number,
+        Finance: number,
+        Investigation: number,
+        Law: number,
+        Medicine: number,
+        Occult: number,
+        Politics: number,
+        Science: number,
+        Technology: number,
+    }
+  }
+  Specialties: Record<string, string>;}
 
 // ------------------------------------
 // Constants payload you build on the frontend

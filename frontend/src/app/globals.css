@@ -704,3 +704,84 @@ button:focus {
 .select-compact option {
   font-size: 0.75rem !important;
 }
+
+/* Searchable Dropdown (theme aware) */
+.sd-root {
+  position: relative;
+  width: 100%;
+}
+
+.sd-input {
+  width: 100%;
+  padding: 10px 12px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.95rem;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sd-input::placeholder {
+  color: var(--muted);
+}
+
+.sd-input:focus {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+/* dropdown panel */
+.sd-menu {
+  position: absolute;
+  z-index: 20;
+  width: 100%;
+  margin-top: 6px;
+
+  background: var(--navbar);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+
+  max-height: 240px;
+  overflow: auto;
+  padding: 6px;
+}
+
+/* option items */
+.sd-item {
+  width: 100%;
+  text-align: left;
+
+  padding: 10px 10px;
+  border-radius: 6px;
+
+  background: transparent;
+  border: none;
+
+  color: var(--foreground);
+  font-size: 0.95rem;
+  cursor: pointer;
+
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.sd-item:hover {
+  background: rgba(37, 99, 235, 0.12); /* primary tint */
+}
+
+.sd-item:active {
+  transform: translateY(1px);
+}
+
+.sd-item-muted {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.sd-empty {
+  padding: 10px 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
